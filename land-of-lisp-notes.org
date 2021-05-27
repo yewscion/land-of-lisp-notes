@@ -21,13 +21,13 @@
 
   #+begin_src lisp :results output
     (print "This File Contains")
-    (print "Two Lines of Text")
+    (print "Two Lines of Lisp")
   #+end_src
 
   #+RESULTS:
   : 
   : "This File Contains" 
-  : "Two Lines of Texct" 
+  : "Two Lines of Lisp" 
 
 
   #+begin_src lisp 
