@@ -1,0 +1,49 @@
+* Chapter 1
+  These are my notes while working through the LoL book, interpersed
+  with all of the code I copied during that work.
+
+  Here's the example on the second page.
+
+  #+begin_src lisp
+    (+ 3 (* 2 4 ))
+  #+end_src
+
+  #+RESULTS:
+  : 11
+
+  The brief history outlines LISP as coming from a more mathematical
+  background than a necessarily compsci background. John McCarthy
+  created LISP in 1959. The goal was to make a programming language
+  that was completely theoretical, but could produce elegant programs.
+
+  It was apparently a fun project, nothing serious. Haha.
+
+
+  #+begin_src lisp :results output
+    (print "This File Contains")
+    (print "Two Lines of Text")
+  #+end_src
+
+  #+RESULTS:
+  : 
+  : "This File Contains" 
+  : "Two Lines of Text" 
+
+
+  #+begin_src lisp 
+    (defparameter *small* 1)
+    (defparameter *big* 100)
+  #+end_src
+
+  #+RESULTS:
+  : *BIG*
+
+  #+begin_src lisp :results output
+    (print *small*)
+    (print *big*)
+  #+end_src
+
+  #+RESULTS:
+  : 
+  : 1 
+  : 100 
