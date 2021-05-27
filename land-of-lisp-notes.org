@@ -27,7 +27,7 @@
   #+RESULTS:
   : 
   : "This File Contains" 
-  : "Two Lines of Text" 
+  : "Two Lines of Texct" 
 
 
   #+begin_src lisp 
@@ -47,3 +47,158 @@
   : 
   : 1 
   : 100 
+
+  The book goes on to talk about global variables, and the differences
+  between defparameter (overwrites old value if it exists) and defvar
+  (does not overwrite existing values).
+
+  #+begin_src lisp
+    (defun guess-my-number ()
+      (ash (+ *small* *big*) -1))
+  #+end_src
+
+  #+RESULTS:
+  : GUESS-MY-NUMBER
+
+  We've defined our first function.
+
+  The ash fuction used here is for (a)rithmetic (s)hifting. We're
+  using it because we are limiting our scope to whole numbers, and
+  want to take the shortened average of our limits.
+
+  This will take the binary representation of that sum and shift it
+  right by one. This, in effect, halves the value: All of the bits
+  move right, and we are in base 2.
+
+  More generally, this operation can be mathematically expressed as
+  floor(input*2^shift), with input being the first argument and shift
+  being the second. (Note that we used a negative value here, and
+  therefore took 2^-1, or 1/2: Halving the number.
+
+
+  #+begin_src lisp
+    (guess-my-number)
+  #+end_src
+
+  #+RESULTS:
+  : 50
+
+
+  This was the expected output.
+
+  #+begin_src lisp
+    (defun smaller ()
+      (setf *big* (1- (guess-my-number)))
+      (guess-my-number))
+    
+    (defun bigger ()
+      (setf *small* (1+ (guess-my-number)))
+      (guess-my-number))
+  #+end_src
+
+  #+RESULTS:
+  : BIGGER
+
+  Let's finish playing this round, now. My number will be 37.
+
+  #+begin_src lisp
+    (guess-my-number)
+    (smaller)
+    (bigger)
+  #+end_src
+
+  #+RESULTS:
+  : 37
+
+  Not bad. Now, to reset it, we'll need a function that sets those
+  global variables back to their starting values. I'm going to try to
+  write it without looking at the book, and then compare.
+
+  #+begin_src lisp
+    (defun my-reset (small big)
+      (setf *small* small)
+      (setf *big* big)
+      (guess-my-number))
+  #+end_src
+
+  #+RESULTS:
+  : MY-RESET
+
+  Let's keep playing. New Number: 92.
+
+  #+begin_src lisp
+    (my-reset 1 100)
+    (bigger)
+    (bigger)
+    (bigger)
+    (smaller)
+    (bigger)
+    
+  #+end_src
+
+  #+RESULTS:
+  : 92
+
+  We've done it! Time to review the book; I wonder how different it
+  will be?
+
+  #+begin_src lisp
+    (defun start-over ()
+      (defparameter *small* 1)
+      (defparameter *big* 100)
+      (guess-my-number))
+  #+end_src
+
+  I like mine better, since it lets You pick new bounds. But I
+  understand why they kept it simple here.
+
+  To end off this chapter, we are discussing scope. Local variables
+  use the `let` function.
+
+  #+begin_src lisp
+    (let ((a 5)
+	  (b 6))
+      (+ a b))
+  #+end_src
+
+  #+RESULTS:
+  : 11
+
+  Once the let function ends, we can no longer reference those
+  variables as they were defined. (+ a b) will no longer work.
+
+  There are two similar functions for local functions, flet and
+  labels.
+  
+  #+begin_src lisp
+    (flet ((f (n)
+	     (+ n 10))
+	   (g (n)
+	     (- n 6)))
+      (g (f 5)))
+    
+  #+end_src
+
+  #+RESULTS:
+  : 9
+
+  flet is the simpler one, which behaves much the way let does. It's
+  big limitation is that it cannot define multiple functions that
+  reference each other, or a function that calls itself. For either of
+  those, we need to use labels.
+
+  #+begin_src lisp
+    (labels ((a (n)
+	       (+ n 5))
+	     (b (n)
+	       (+ (a n) 6)))
+      (b 10))
+  #+end_src
+
+  #+RESULTS:
+  : 21
+
+  One reason to use flet over labels would be to use a global function
+  of the same name: In labels, it would instead refer to itself.
+
+  
