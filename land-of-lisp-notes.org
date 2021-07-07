@@ -1,416 +1,903 @@
-* Chapter 2
-  These are my notes while working through the LoL book, interpersed
-  with all of the code I copied during that work.
+#+PROPERTY: header-args :results replace verbatim output
+These are my notes while working through the LoL book, interpersed
+with all of the code I copied during that work.
 
-  Here's the example on the second page.
-
-  #+begin_src lisp
-    (+ 3 (* 2 4 ))
-  #+end_src
-
-  #+RESULTS:
-  : 11
-
-  The brief history outlines LISP as coming from a more mathematical
-  background than a necessarily compsci background. John McCarthy
-  created LISP in 1959. The goal was to make a programming language
-  that was completely theoretical, but could produce elegant programs.
-
-  It was apparently a fun project, nothing serious. Haha.
-
-
-  #+begin_src lisp :results output
-    (print "This File Contains")
-    (print "Two Lines of Lisp")
-  #+end_src
-
-  #+RESULTS:
-  : 
-  : "This File Contains" 
-  : "Two Lines of Lisp" 
-
-
-  #+begin_src lisp 
-    (defparameter *small* 1)
-    (defparameter *big* 100)
-  #+end_src
-
-  #+RESULTS:
-  : *BIG*
-
-  #+begin_src lisp :results output
-    (print *small*)
-    (print *big*)
-  #+end_src
-
-  #+RESULTS:
-  : 
-  : 1 
-  : 100 
-
-  The book goes on to talk about global variables, and the differences
-  between defparameter (overwrites old value if it exists) and defvar
-  (does not overwrite existing values).
-
-  #+begin_src lisp
-    (defun guess-my-number ()
-      (ash (+ *small* *big*) -1))
-  #+end_src
-
-  #+RESULTS:
-  : GUESS-MY-NUMBER
-
-  We've defined our first function.
-
-  The ash fuction used here is for (a)rithmetic (s)hifting. We're
-  using it because we are limiting our scope to whole numbers, and
-  want to take the shortened average of our limits.
-
-  This will take the binary representation of that sum and shift it
-  right by one. This, in effect, halves the value: All of the bits
-  move right, and we are in base 2.
-
-  More generally, this operation can be mathematically expressed as
-  floor(input*2^shift), with input being the first argument and shift
-  being the second. (Note that we used a negative value here, and
-  therefore took 2^-1, or 1/2: Halving the number.
-
-
-  #+begin_src lisp
-    (guess-my-number)
-  #+end_src
-
-  #+RESULTS:
-  : 50
-
-
-  This was the expected output.
-
-  #+begin_src lisp
-    (defun smaller ()
-      (setf *big* (1- (guess-my-number)))
-      (guess-my-number))
-    
-    (defun bigger ()
-      (setf *small* (1+ (guess-my-number)))
-      (guess-my-number))
-  #+end_src
-
-  #+RESULTS:
-  : BIGGER
-
-  Let's finish playing this round, now. My number will be 37.
-
-  #+begin_src lisp
-    (guess-my-number)
-    (smaller)
-    (bigger)
-  #+end_src
-
-  #+RESULTS:
-  : 37
-
-  Not bad. Now, to reset it, we'll need a function that sets those
-  global variables back to their starting values. I'm going to try to
-  write it without looking at the book, and then compare.
-
-  #+begin_src lisp
-    (defun my-reset (small big)
-      (setf *small* small)
-      (setf *big* big)
-      (guess-my-number))
-  #+end_src
-
-  #+RESULTS:
-  : MY-RESET
-
-  Let's keep playing. New Number: 92.
-
-  #+begin_src lisp
-    (my-reset 1 100)
-    (bigger)
-    (bigger)
-    (bigger)
-    (smaller)
-    (bigger)
-    
-  #+end_src
-
-  #+RESULTS:
-  : 92
-
-  We've done it! Time to review the book; I wonder how different it
-  will be?
-
-  #+begin_src lisp
-    (defun start-over ()
-      (defparameter *small* 1)
-      (defparameter *big* 100)
-      (guess-my-number))
-  #+end_src
-
-  I like mine better, since it lets You pick new bounds. But I
-  understand why they kept it simple here.
-
-  To end off this chapter, we are discussing scope. Local variables
-  use the `let` function.
-
-  #+begin_src lisp
-    (let ((a 5)
-	  (b 6))
-      (+ a b))
-  #+end_src
-
-  #+RESULTS:
-  : 11
-
-  Once the let function ends, we can no longer reference those
-  variables as they were defined. (+ a b) will no longer work.
-
-  There are two similar functions for local functions, flet and
-  labels.
-  
-  #+begin_src lisp
-    (flet ((f (n)
-	     (+ n 10))
-	   (g (n)
-	     (- n 6)))
-      (g (f 5)))
-    
-  #+end_src
-
-  #+RESULTS:
-  : 9
-
-  flet is the simpler one, which behaves much the way let does. It's
-  big limitation is that it cannot define multiple functions that
-  reference each other, or a function that calls itself. For either of
-  those, we need to use labels.
-
-  #+begin_src lisp
-    (labels ((a (n)
-	       (+ n 5))
-	     (b (n)
-	       (+ (a n) 6)))
-      (b 10))
-  #+end_src
-
-  #+RESULTS:
-  : 21
-
-  One reason to use flet over labels would be to use a global function
-  of the same name: In labels, it would instead refer to itself.
-* Chapter 3
-  This chapter starts off by explaining the difference (and
-  connection) between syntax and semantics in both human and
-  programming languages.
-
-  /Syntax/ is the rules a piece of text needs to follow to be valid in
-  whatever language it is written in.
-
-  /Semantics/ is the underlying thought or action present in a piece
-  of text.
-
-  Two pieces of text can have the /different/ syntax, but /identical/
-  semantics, if they are in different languages.
-  
-  *Having a simple syntax is a defining feature of the Lisp language.*
-
-  A /Reader/ is the part of a Lisp compiler or interpreter that reads
-  in the code. In Lisp, this is simpler than in any other major
-  programming language.
-
-  #+begin_src lisp
-    (defun square (n)
-      (* n n))
-  #+end_src
-
-  #+RESULTS:
-  : SQUARE
-
-  The above function, =square=, is used to examine this further.
-
-  This is a /function declaration/, which creates a new function that
-  takes a number and returns its square. It consists of exactly two
-  parts: /Parentheses/, and /symbols/. These two parts are arranged in
-  a set of /nested lists/ that create the function.
-
-  This is important, because *Lisp only has one way of organizing bits
-  of code: it uses /parentheses/ to organize /symbols/ into /lists/.*
-
-  We are going to examine these ideas further.
-** Symbols
-
-   In Lisp, a symbol is any stand alone word.
-
-   They can be made up of letters ([A-Za-z]), numbers([0-9]), and
-   symbols (+ - / * = < > ? ! _). They are case insensitive, though
-   convention avoids typing in upper case.
+* Part I - Lisp is Power
+** Chapter 1 - Getting Started with Lisp
+   I mostly read through this chapter before taking notes. However, it
+   mostly focuses on Common Lisp as a concept and the installation
+   progress. I may come back at the end and take real notes, but for
+   now I am comfortable leaving it as is.
+   Here's the example on the second page.
 
    #+begin_src lisp
-     (eq 'fooo 'FoOo)
+     (+ 3 (* 2 4 ))
    #+end_src
 
    #+RESULTS:
-   : T
-   
-** Numbers
-   
-   Lisp supports both integers and floating point numbers.
+   : 11
+
+   The brief history outlines LISP as coming from a more mathematical
+   background than a necessarily compsci background. John McCarthy
+   created LISP in 1959. The goal was to make a programming language
+   that was completely theoretical, but could produce elegant programs.
+
+   It was apparently a fun project, nothing serious. Haha.
+
 
    #+begin_src lisp :results output
-     (print (+ 1 1.0))
-     (print (expt 53 53))
-     (print (/ 2 3))
+     (print "This File Contains")
+     (print "Two Lines of Lisp")
    #+end_src
 
    #+RESULTS:
    : 
-   : 2.0 
-   : 24356848165022712132477606520104725518533453128685640844505130879576720609150223301256150373 
-   : 2/3 
-
-   If You work with both integers and floating point numbers, the
-   integers will become "poisoned" and a floating point number will be
-   returned.
-
-   Lisp is good with big numbers.
-
-   Lisp also can return ratios (dividing integers) as well as decimal
-   numbers (dividing floating point numbers).
-
-** Strings
-
-   To indicate a string in Lisp, surround it with double quotes (").
-
-
-   #+begin_src lisp
-     (princ "Tutti Frutti")
+   : "This File Contains" 
+   : "Two Lines of Lisp" 
+** Chapter 2 - Creating Your First Lisp Program
+   We're going to be developing a guess-my-number game.
+*** Defining Global Variables
+   #+begin_src lisp 
+     (defparameter *small* 1)
+     (defparameter *big* 100)
    #+end_src
 
    #+RESULTS:
-   : Tutti Frutti
+   : *BIG*
+   #+begin_src lisp :results output
+     (print *small*)
+     (print *big*)
+   #+end_src
+
+   #+RESULTS:
+   : 
+   : 1 
+   : 100 
+
+   The book goes on to talk about global variables, and the differences
+   between defparameter (overwrites old value if it exists) and defvar
+   (does not overwrite existing values).
+*** Defining Global Functions
+   #+begin_src lisp
+     (defun guess-my-number ()
+       (ash (+ *small* *big*) -1))
+   #+end_src
+
+   #+RESULTS:
+   : GUESS-MY-NUMBER
+
+   We've defined our first function.
+
+   The ash fuction used here is for (a)rithmetic (s)hifting. We're
+   using it because we are limiting our scope to whole numbers, and
+   want to take the shortened average of our limits.
+
+   This will take the binary representation of that sum and shift it
+   right by one. This, in effect, halves the value: All of the bits
+   move right, and we are in base 2.
+
+   More generally, this operation can be mathematically expressed as
+   floor(input*2^shift), with input being the first argument and shift
+   being the second. (Note that we used a negative value here, and
+   therefore took 2^-1, or 1/2: Halving the number.
+
+
+   #+begin_src lisp
+     (guess-my-number)
+   #+end_src
+
+   #+RESULTS:
+   : 50
+*** Subfunctions
+   This was the expected output.
+
+   #+begin_src lisp
+     (defun smaller ()
+       (setf *big* (1- (guess-my-number)))
+       (guess-my-number))
+    
+     (defun bigger ()
+       (setf *small* (1+ (guess-my-number)))
+       (guess-my-number))
+   #+end_src
+
+   #+RESULTS:
+   : BIGGER
+
+   Let's finish playing this round, now. My number will be 37.
+
+   #+begin_src lisp
+     (guess-my-number)
+     (smaller)
+     (bigger)
+   #+end_src
+
+   #+RESULTS:
+   : 37
+
+   Not bad. Now, to reset it, we'll need a function that sets those
+   global variables back to their starting values. I'm going to try to
+   write it without looking at the book, and then compare.
+
+   #+begin_src lisp
+     (defun my-reset (small big)
+       (setf *small* small)
+       (setf *big* big)
+       (guess-my-number))
+   #+end_src
+
+   #+RESULTS:
+   : MY-RESET
+
+   Let's keep playing. New Number: 92.
+
+   #+begin_src lisp
+     (my-reset 1 100)
+     (bigger)
+     (bigger)
+     (bigger)
+     (smaller)
+     (bigger)
+    
+   #+end_src
+
+   #+RESULTS:
+   : 92
+
+   We've done it! Time to review the book; I wonder how different it
+   will be?
+
+   #+begin_src lisp
+     (defun start-over ()
+       (defparameter *small* 1)
+       (defparameter *big* 100)
+       (guess-my-number))
+   #+end_src
+
+   I like mine better, since it lets You pick new bounds. But I
+   understand why they kept it simple here.
+*** Scope
+   To end off this chapter, we are discussing scope. Local variables
+   use the `let` function.
+
+   #+begin_src lisp
+     (let ((a 5)
+	   (b 6))
+       (+ a b))
+   #+end_src
+
+   #+RESULTS:
+   : 11
+
+   Once the let function ends, we can no longer reference those
+   variables as they were defined. (+ a b) will no longer work.
+
+   There are two similar functions for local functions, flet and
+   labels.
+  
+   #+begin_src lisp
+     (flet ((f (n)
+	      (+ n 10))
+	    (g (n)
+	      (- n 6)))
+       (g (f 5)))
+    
+   #+end_src
+
+   #+RESULTS:
+   : 9
+
+   flet is the simpler one, which behaves much the way let does. It's
+   big limitation is that it cannot define multiple functions that
+   reference each other, or a function that calls itself. For either of
+   those, we need to use labels.
+
+   #+begin_src lisp
+     (labels ((a (n)
+		(+ n 5))
+	      (b (n)
+		(+ (a n) 6)))
+       (b 10))
+   #+end_src
+
+   #+RESULTS:
+   : 21
+
+   One reason to use flet over labels would be to use a global function
+   of the same name: In labels, it would instead refer to itself.
+** Chapter 3 - Exploring the Syntax of Lisp Code
+   This chapter starts off by explaining the difference (and
+   connection) between syntax and semantics in both human and
+   programming languages.
+*** Syntax and Semantics
+   /Syntax/ is the rules a piece of text needs to follow to be valid in
+   whatever language it is written in.
+
+   /Semantics/ is the underlying thought or action present in a piece
+   of text.
+
+   Two pieces of text can have the /different/ syntax, but /identical/
+   semantics, if they are in different languages.
+  
+   *Having a simple syntax is a defining feature of the Lisp language.*
+
+   A /Reader/ is the part of a Lisp compiler or interpreter that reads
+   in the code. In Lisp, this is simpler than in any other major
+   programming language.
+
+   #+begin_src lisp
+     (defun square (n)
+       (* n n))
+   #+end_src
+
+   #+RESULTS:
+   : SQUARE
+
+   The above function, =square=, is used to examine this further.
+
+   This is a /function declaration/, which creates a new function that
+   takes a number and returns its square. It consists of exactly two
+   parts: /Parentheses/, and /symbols/. These two parts are arranged in
+   a set of /nested lists/ that create the function.
+
+   This is important, because *Lisp only has one way of organizing bits
+   of code: it uses /parentheses/ to organize /symbols/ into /lists/.*
+
+   We are going to examine these ideas further.
+*** Symbols
+
+    In Lisp, a symbol is any stand alone word.
+
+    They can be made up of letters ([A-Za-z]), numbers([0-9]), and
+    symbols (+ - / * = < > ? ! _). They are case insensitive, though
+    convention avoids typing in upper case.
+
+    #+begin_src lisp
+      (eq 'fooo 'FoOo)
+    #+end_src
+
+    #+RESULTS:
+    : T
    
-   (The =princ= function does /not/ output a newline, and is therefore
-   less READable than the =print= function.)
+*** Numbers
    
-   You can also include /escaped characters/ using standard backslash
-   notation.
+    Lisp supports both integers and floating point numbers.
+
+    #+begin_src lisp :results output
+      (print (+ 1 1.0))
+      (print (expt 53 53))
+      (print (/ 2 3))
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : 2.0 
+    : 24356848165022712132477606520104725518533453128685640844505130879576720609150223301256150373 
+    : 2/3 
+
+    If You work with both integers and floating point numbers, the
+    integers will become "poisoned" and a floating point number will be
+    returned.
+
+    Lisp is good with big numbers.
+
+    Lisp also can return ratios (dividing integers) as well as decimal
+    numbers (dividing floating point numbers).
+
+*** Strings
+
+    To indicate a string in Lisp, surround it with double quotes (").
 
 
-** Code and Data Modes
+    #+begin_src lisp
+      (princ "Tutti Frutti")
+    #+end_src
 
-There are two modes in Lisp: /Code Mode/ and /Data Mode/.
+    #+RESULTS:
+    : Tutti Frutti
+   
+    (The =princ= function does /not/ output a newline, and is therefore
+    less READable than the =print= function.)
+   
+    You can also include /escaped characters/ using standard backslash
+    notation.
 
-In /Code Mode/, lists need to be structured as a /form/: with the
-first item in the list being a /command/ and the rest being the
-/parameters/. For the form =(expt 2 3)=, =expt= is the command, and
-the parameters are the list =(2 3)=. It therefore results in =8=.
+*** Code and Data Modes
 
-#+begin_src lisp
-  (expt 2 3)
-#+end_src
+ There are two modes in Lisp: /Code Mode/ and /Data Mode/.
 
-#+RESULTS:
-: 8
+ In /Code Mode/, lists need to be structured as a /form/: with the
+ first item in the list being a /command/ and the rest being the
+ /parameters/. For the form =(expt 2 3)=, =expt= is the command, and
+ the parameters are the list =(2 3)=. It therefore results in =8=.
 
-When lisp reads the parameters, it stays in /Code Mode/. This way, You
-can nest forms indefinitely, as You may need to.
+ #+begin_src lisp
+   (expt 2 3)
+ #+end_src
 
-#+begin_src lisp
-  (expt 2 (+ 3 4))
-#+end_src
+ #+RESULTS:
+ : 8
 
-#+RESULTS:
-: 128
+ When lisp reads the parameters, it stays in /Code Mode/. This way, You
+ can nest forms indefinitely, as You may need to.
 
-*Inner forms are always executed before outer forms.*
+ #+begin_src lisp
+   (expt 2 (+ 3 4))
+ #+end_src
 
-You can engage /Data Mode/ by placing a single quote (') in front of
-the leading parenthesis (like this: ='(expt 2 3)=). This tells Lisp to
-treat the enclosed data as a plain list: do /not/ evaluate any
-functions that may be inside.
+ #+RESULTS:
+ : 128
 
-** Cons Cells
-Lists hold the program together, but what is the mortar that ties the
-bricks of symbols into a list? Cons Cells.
+ *Inner forms are always executed before outer forms.*
 
-[ ][ ]
- V  V
+ You can engage /Data Mode/ by placing a single quote (') in front of
+ the leading parenthesis (like this: ='(expt 2 3)=). This tells Lisp to
+ treat the enclosed data as a plain list: do /not/ evaluate any
+ functions that may be inside.
 
-Think of a Cons cell as a pair of boxes that can point to other
-things. Cons cells can point to numbers, strings, lists, or other cons
-cells; they are the true building blocks of the language. Everything
-else is an abstraction built on top of them.
+*** Cons Cells
+ Lists hold the program together, but what is the mortar that ties the
+ bricks of symbols into a list? Cons Cells.
 
-In brief, a cons cell can be thought of as similar to a linked list
-item.
+ [ ][ ]
+  V  V
 
-** Cons Function
+ Think of a Cons cell as a pair of boxes that can point to other
+ things. Cons cells can point to numbers, strings, lists, or other cons
+ cells; they are the true building blocks of the language. Everything
+ else is an abstraction built on top of them.
 
-There are three basic functions for interacting with lists in Lisp:
-=cons=, =car=, and =cdr=.
+ In brief, a cons cell can be thought of as similar to a linked list
+ item.
 
-=cons= is how You link items together. It can link any two
-symbols. The second item is usually a list.
+*** Cons Function
 
-#+begin_src lisp
-  (cons 'chicken 'pork)
-#+end_src
+ There are three basic functions for interacting with lists in Lisp:
+ =cons=, =car=, and =cdr=.
 
-#+RESULTS:
-: (CHICKEN . CAT)
+ =cons= is how You link items together. It can link any two
+ symbols. The second item is usually a list.
 
-It returns the Cons cell it creates, printing it in the dotted pair
-notation: =(CHICKEN . CAT)=.
+ #+begin_src lisp
+   (cons 'chicken 'pork)
+ #+end_src
 
-If the second item is =nil=, then the list is a one-symbol list like
-=(CHICKEN)=. This is really still a cons cell in the form of =(CHICKEN
-. nil)=, but =nil= is used to end lists in Lisp. It's a special use.
+ #+RESULTS:
+ : (CHICKEN . CAT)
 
-The result is shown as a list because Lisp always goes out of its way
-to hide the Cons cells if it can. Since a Cons cell with =nil= at the
-end is a list, it shows the list.
+ It returns the Cons cell it creates, printing it in the dotted pair
+ notation: =(CHICKEN . CAT)=.
 
-The /empty list/, =()= is synonymous with =nil=.
+ If the second item is =nil=, then the list is a one-symbol list like
+ =(CHICKEN)=. This is really still a cons cell in the form of =(CHICKEN
+ . nil)=, but =nil= is used to end lists in Lisp. It's a special use.
 
-This is incidently why the second item in a call to =cons= is usually
-a list: This, in effect, adds the first item to the front of the
-already-properly-constructed list.
+ The result is shown as a list because Lisp always goes out of its way
+ to hide the Cons cells if it can. Since a Cons cell with =nil= at the
+ end is a list, it shows the list.
 
-#+begin_src lisp :results value list
-  (cons 'pork (cons 'beef (cons 'chicken ())))
-#+end_src
+ The /empty list/, =()= is synonymous with =nil=.
 
-#+RESULTS:
-- PORK
-- BEEF
-- CHICKEN
+ This is incidently why the second item in a call to =cons= is usually
+ a list: This, in effect, adds the first item to the front of the
+ already-properly-constructed list.
 
-In short: *A chain of cons cells and a list are the same thing in
-Lisp*.
+ #+begin_src lisp :results value list
+   (cons 'pork (cons 'beef (cons 'chicken ())))
+ #+end_src
+
+ #+RESULTS:
+ - PORK
+ - BEEF
+ - CHICKEN
+
+ In short: *A chain of cons cells and a list are the same thing in
+ Lisp*.
+
+*** Car and Cdr
+ Lists are just long chains of two item cells.
+
+ The =car= function returns the first thing, and the =cdr= function
+ returns the last thing.
+
+ There are extension functions up to four deep, that allow for pulling
+ specific data out of a list.
+
+ #+begin_src lisp
+   (cadadr '((perl c cpp) (lisp clojure haskell) scheme)) 
+ #+end_src
+
+ #+RESULTS:
+ : CLOJURE
+
+ In short, we've learned:
+
+ - Parentheses are there to keep syntax down.
+ - Lists are just groups of connected cons cells.
+ - You can create lists using =cons=.
+ - You can inspect parts of a list using =car= and =cdr=.
 
 
-** Car and Cdr
-Lists are just long chains of two item cells.
+*** List
+    Common Lisp has many functions built on top of the basic three
+    (=cons=, =car=, and =cdr=).
 
-The =car= function returns the first thing, and the =cdr= function
-returns the last thing.
+    One convenient one is =list=. It does all of the work to build a
+    list at once, as that is a common pattern.
 
-There are extension functions up to four deep, that allow for pulling
-specific data out of a list.
+    #+begin_src lisp
+      (list 'pork 'beef 'chicken)
+    #+end_src
 
-#+begin_src lisp
-  (cadadr '((perl c cpp) (lisp clojure haskell) scheme)) 
-#+end_src
+    #+RESULTS:
+    : (PORK BEEF CHICKEN)
+*** Nested Lists
+    Lists can contain other lists.
 
-#+RESULTS:
-: CLOJURE
+    The first two commands are equivalent to each of the last two
+    commands, in that they all isolate the first nested list and then
+    return a list consisting of the final two elements of the first
+    list.
+    #+begin_src lisp :results output
+      (print (car '((peas carrots tomatoes) (pork beef chicken))))
+      (print (cdr '(peas carrots tomatoes)))
+      (print (cdr (car '((peas carrots tomatoes) (pork beef chicken)))))
+      (print (cdar '((peas carrots tomatoes) (pork beef chicken))))
+    #+end_src
 
-In short, we've learned:
+    #+RESULTS:
+    : 
+    : (PEAS CARROTS TOMATOES) 
+    : (CARROTS TOMATOES) 
+    : (CARROTS TOMATOES) 
+    : (CARROTS TOMATOES)
 
-- Parentheses are there to keep syntax down.
-- Lists are just groups of connected cons cells.
-- You can create lists using =cons=.
-- You can inspect parts of a list using =car= and =cdr=.
+    You can also create the initial list from above using /solely/
+    =cons=, which is really what the above is doing behind the scenes.
 
+    #+begin_src lisp
+      (cons
+       (cons 'peas
+	     (cons 'carrots
+		   (cons 'tomatoes
+			 ())))
+       (cons
+	(cons 'pork
+	      (cons 'beef
+		    (cons 'chicken
+			  ())))
+	()))
+    #+end_src
+
+    #+RESULTS:
+    : ((PEAS CARROTS TOMATOES) (PORK BEEF CHICKEN))
+
+    Here are some c*r functions operating on the list: ='((peas carrots
+    tomatoes) (pork beef chicken) duck)=. Note that these only go 4
+    levels deep: Anything deeper than that will need to be written by
+    hand.
+    #+begin_src lisp :results output
+      (print (cddr '((peas carrots tomatoes) (pork beef chicken) duck)))
+      (print (caddr '((peas carrots tomatoes) (pork beef chicken) duck)))
+      (print (cddar '((peas carrots tomatoes) (pork beef chicken) duck)))
+      (print (cadadr '((peas carrots tomatoes) (pork beef chicken) duck)))
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : (DUCK) 
+    : DUCK 
+    : (TOMATOES) 
+    : BEEF 
+*** What we've Learned
+    We discussed basic Lisp syntax, including the benefits of
+    parentheses, lists, and cons/car/cdr.
+* Part II - Lisp is Symmetry
+** Chapter 4 - Making Decisions with Conditions
+   Now we're finally learning some flow control.
+*** Symmetry of nil and ()
+    *Lisp commands and data structures are imbued with symmetry in
+    every conceivable way.*
+*** Empty Equals False
+    Lisp philosophy strongly emphasizes lists. Empty Lists are treated
+    as a false value when evaluating a condition.
+
+    #+begin_src lisp
+      (if '()
+	  'i-am-true
+	  'i-am-false)
+    #+end_src
+
+    #+RESULTS:
+    : I-AM-FALSE
+
+    Any non-empty list will evaluate to true.
+
+    #+begin_src lisp
+      (if '(1)
+	  'i-am-true
+	  'i-am-false)
+    #+end_src
+
+    #+RESULTS:
+    : I-AM-TRUE
+
+    This allows us to process /recursion/ very easily, by taking items
+    from the front of a list and sending the rest back to the function
+    in the tail call.
+
+    Here's a classic lisp function that returns the length of a list
+    using the recursion process above.
+
+    #+begin_src lisp
+      (defun my-length (list)
+	(if list
+	    (1+ (my-length (cdr list)))
+	    0))
+      
+      (my-length '(list with four symbols))
+    #+end_src
+
+    #+RESULTS:
+    : 4
+
+    Lists in Lisp are recursive to begin with (conses of conses of
+    conses) so consuming a list this way is a natural and efficient
+    progression. However, calling Yourself recursively can sometime
+    impact the speed of a fuction. There is a special kind of
+    recursion to mitigate this problem that will be discussed in
+    *Chapter 14*.
+*** The Four Disguises of ()
+    The empty list is not only /something/ that evaluates to
+    false. =()= is the *only* false value in Common Lisp. *Any value
+    not equivalent to an empty list will be considered a true value.*
+
+    #+begin_src lisp :results output
+      (print (eq '() nil))
+      (print (eq '() ()))
+      (print (eq '() 'nil))
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : T 
+    : T 
+    : T 
+
+    ='()=, =()=, ='nil=, and =nil= are all equavalent, and all
+    represent an empty list. =()= and =nil= are special forms, because
+    they seem to violate the rules of Lisp syntax. However, they are
+    all in the Common Lisp spec: ='()= is a basic, empty list. ='nil=
+    exists due to the requirements of the Common Lisp spec to provide
+    a common target for falsity. =nil= evaluates to itself, or rather
+    ='nil=, which is treated as an empty list. =()= evaluates
+    evaluates to ='nil= due to a requirement in the spec for =()= and
+    =nil= to be treated the same.
+
+    This is different from Scheme. In Scheme, empty lists are simply
+    empty lists, and are not treated as values with falsity. However,
+    in Common Lisp, they are.
+*** The Conditionals: if and Beyond
+    The standard =if= command exists in lisp.
+
+    The format of the function is basically:
+
+    (if <condition> <then statement> <else statement>)
+
+    However, the else statement is optional. In the case of an omitted
+    else statement being lead to, then nothing is executed and the
+    value =nil= is returned.
+    #+begin_src lisp :results output
+      (if (= (+ 1 2) 3)
+	  (print "yup")
+	  (print "nope"))
+      (if (= (+ 1 2) 4)
+	  (print "yup")
+	  (print "nope"))
+      (if (= (+ 1 2) 3)
+	  (print "yup"))
+      (if (= (+ 1 2) 4)
+	  (print "yup"))
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : "yup" 
+    : "nope" 
+    : "yup"
+
+    As =nil= is equivalent to an empty list, it then becomes obvious
+    that testing for an empty list is important. And, because an empty
+    list is treated as =false=, it is trivial to test for one.
+
+    #+begin_src lisp :results output
+      (if '(1)
+	  (print "Not Empty")
+	  (print "Empty"))
+      (if '()
+	  (print "Not Empty")
+	  (print "Empty"))
+      (if (if (= (+ 1 2) 4)
+	      (print "yup"))
+	  (print "This won't happen.")
+	  (print "The original value was nil."))
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : "Not Empty" 
+    : "Empty" 
+    : "The original value was nil." 
+
+    Usually, when a function is executed in lisp, all of the
+    expressions after a function are evaluated before the function
+    itself is. However, =if= doesn't follow that rule. This makes
+    things like the following possible, which includes an illegal
+    command (dividing by zero).
+
+    #+begin_src lisp
+      (if (oddp 5)
+	  'odd-number
+	  (/ 1 0))
+    #+end_src
+
+    #+RESULTS:
+    : ODD-NUMBER
+
+    Since only the chosen expression is evaluated, the =(/ 1 0)= else
+    statement is never touched, and therefore does not cause an error.
+
+    This rulebreaking behavior is possible because the =if= function
+    is considered a /special form/, which gives it special privileges
+    (like not preevaluating all of its arguments). *Conditional
+    Statements in Lisp are Typically Special Forms.* Special forms are
+    usually commands that are baked into a language.
+
+    Note: /Macros,/ which we'll learn about in Chapter 16, are
+    something like user-created special forms.
+
+    The other important thing to note about =if= is that it is only
+    capable of doing one thing, since only one expression (either
+    =then= or =else=) is ever evaluated. It is impossible to do two
+    things with a single =if=.
+
+    This is considered a good thing in Functional Programming, though
+    in other paradigms is a limitation that may be fairly prominent.
+
+    Of course, there is a way around it. There's another special form,
+    =progn=, that allows You to wedge in more commands to that single
+    expression that gets evaluated. Per the definition in the
+    [[http://clhs.lisp.se/Body/s_progn.htm][HyperSpec]], as each form is evaluated, all return values are
+    ignored aside from the final form's. Per the [[https://www.gnu.org/software/emacs/manual/html_node/eintr/progn.html][Elisp Equivalent]], the
+    preceding forms are evaluated primarily for their side effects
+    (hence why functional programming may not make much use of
+    =progn=.
+
+    #+begin_src lisp :results output
+      (defvar *number-was-odd* nil)
+      (if (oddp 5)
+	  (progn (setf *number-was-odd* t)
+		 (print *number-was-odd*)
+		 (print "odd number"))
+	  'even-number)
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : T 
+    : "odd number" 
+*** Beyond if: when and unless
+    There are a number of commands that include an /implicit
+    progn/. We'll look at two here, =when= and =unless=.
+
+    With =when=, all enclosed expressions are evaluated /when/ the
+    condition is true. With =unless=, all enclosed expressions are
+    evaluated /unless/ the condition is true.
+
+    The trade off with these two functions is they will only return
+    =nil= and do nothing when the condition is the opposite of their
+    expected state: That is, when =when= has a false condition and
+    when =unless= has a true condition, nothing will happen and the
+    statement will return =nil=.
+
+    #+begin_src lisp :results output
+      (when (oddp 5)
+	(print "Yup")
+	(print "5 is indeed Odd."))
+      (unless (oddp 4)
+	(print "Yup")
+	(print "4 is not Odd."))
+      (when (oddp 4)
+	(print "Yup")
+	(print "5 is indeed Odd."))
+      (unless (oddp 5)
+	(print "Yup")
+	(print "4 is not Odd."))
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : "Yup" 
+    : "5 is indeed Odd." 
+    : "Yup" 
+    : "4 is not Odd." 
+
+*** The Command that Does it All: cond
+    If You don't want to compromise, and want the greatest degree of
+    control over Your flow, =cond= does not have any
+    trade-offs... Aside from its complexity.
+
+    *The =cond= form is the classic way to do branching in Lisp.*
+
+    It allows implicit progns, can handle more than one branch, and
+    can even evaluate multiple conditions.
+
+    The body of a =cond= statement uses a layer of parentheses to
+    separate its branches. The first expression in each parantesized
+    part contains the conditional statement for making that branch
+    active. The conditions are always checked from the top down, so
+    *the first successful branch defines the behavior of a =cond=
+    statement.*
+
+    To define a base case, it is a common idiom to include =t= as the
+    final conditional statement, so that if that branch is reached it
+    is always executed.
+
+    This reminds me a lot of a switch-case statement from C++. Or
+    rather, how I wish the switch-case statement from C++ behaved.
+
+    Here's an example, where the supplied person's name is compared to
+    two defined names and a base case before the branch is
+    chosen. Note that the branches can contain more than one
+    expression, due to the implicit =progn=.
+    #+begin_src lisp :results output
+      (defvar *arch-enemy* nil)n
+      (defun pudding-eater (person)
+	(cond
+	  (
+	   (eq person 'henry)
+	   (setf *arch-enemy* 'stupid-lisp-alien)
+	   (print "Curse You Lisp alien - You ate my pudding!")
+	   )
+	  (
+	   (eq person 'johnny)
+	   (setf *arch-enemy* 'useless-old-johnny)
+	   (print "I hope You choked on my Pudding, Johnny.")
+	   )
+	  (
+	   t
+	   (print "Why'd You eat my pudding, stranger?")
+	   )))
+      (pudding-eater 'johnny)
+      (print *arch-enemy*)
+      (pudding-eater 'george-clooney)
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : "I hope You choked on my Pudding, Johnny." 
+    : USELESS-OLD-JOHNNY 
+    : "Why'd You eat my pudding, stranger?" 
+
+*** Branching with case
+    As I noted myself, the =cond= example reminded me of switch-case
+    in C++. It is so commonly used to simply compare a single input to
+    a variety of cases, that there is a special form for that specific
+    use case: the =case= form.
+
+    The benefits to using the =case= form are mostly to reduce the
+    syntactic complexity in a program. There are also (depending on
+    the implementation used) a variety of efficiency optimizations
+    that may come with using =case= over =cond=.
+
+    *Warning:* Because the =case= command uses =eq= internally to
+     compare values, =case= is usually only used for branching on
+     symbol values. It cannot be used to branch on string values,
+     among other things. The next section goes over this in more
+     detail.
+
+     Below is the same program as in the =cond= section, but edited to
+     use =case= instead.
+
+     #+begin_src lisp :results output
+      (defun pudding-eater-case (person)
+	(case person
+	  (
+	   (henry)
+	   (setf *arch-enemy* 'stupid-lisp-alien)
+	   (print "Curse You Lisp alien - You ate my pudding!")
+	   )
+	  (
+	   'johnny
+	   (setf *arch-enemy* 'useless-old-johnny)
+	   (print "I hope You choked on my Pudding, Johnny.")
+	   )
+	  (
+	   otherwise
+	   (print "Why'd You eat my pudding, stranger?")
+	   )))
+      (pudding-eater-case 'johnny)
+      (print *arch-enemy*)
+      (pudding-eater-case 'george-clooney)
+     #+end_src
+
+     #+RESULTS:
+     : 
+     : "I hope You choked on my Pudding, Johnny." 
+     : USELESS-OLD-JOHNNY 
+     : "Why'd You eat my pudding, 
+*** Using the Stealth Conditionals: and and or
+    The conditionals =and= and =or= are simple mathematical
+    operators. They let You chain conditionals together.
+
+    The =and= form lets You check multiple conditionals at the same
+    time, and only returns true if they are all true.
+
+    The =or= form lets You check multiple conditionals at the same
+    time, and only returns false if none of them are true.
+    
+    #+begin_src lisp
+      (print (and (oddp 7) (oddp 5) (oddp 3)))
+      (print (and (oddp 6) (oddp 5) (oddp 3)))
+      (print (or (oddp 8) (oddp 7) (oddp 6)))
+      (print (or (oddp 8) (oddp 6) (oddp 4)))
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : T 
+    : NIL 
+    : T 
+    : NIL 
+
+    However, due to the way Common Lisp handles =true= and =false=, we
+    can use =and= and =or= for conditional behavior.
+
+    Here is an example of how we can do this with =or=. We define a
+    global variable =*is-it-even*= and =or= the command to set it to
+    =t= with the numbers we are checking.
+
+    #+begin_src lisp
+      (defparameter *is-it-even* nil)
+      (print (or (oddp 4) (setf *is-it-even* t)))
+      (print *is-it-even*)
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : T 
+    : T 
+
+    However, if we do the same with an odd number, the global variable
+    remains unchanged.
+
+    #+begin_src lisp
+      (defparameter *is-it-even-2* nil)
+      (print (or (oddp 5) (setf *is-it-even-2* t)))
+      (print *is-it-even-2*)
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : T 
+    : NIL 
+
+    This is because Common Lisp uses /Shortcut Boolean Evaluation/,
+    which basically means that once Lisp determines an earlier
+    statement in a list of =or= values is true, it returns and leaves
+    the rest unevaluated. In short, *You can use =or= to run a command
+    /only/ if all prior conditionals were false.*
+
+    You can use =and= similarly, however the shortcut for =and= is the
+    opposite: *You can use =and= to run a command /only/ if all prior
+    conditionals were true.*
+
+    It is considered clean code to avoid this, however. If You want
+    the cleanest, most maintainable code possible, only use these
+    functions on expressions that are designed to return a Boolean
+    value.
+*** Using Functions that Return More than Just the Truth
+    Let's take a look at another function: the =member= command can be
+    used to check if an item exists in a list.
+
+    
