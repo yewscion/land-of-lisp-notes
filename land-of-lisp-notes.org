@@ -900,4 +900,176 @@ with all of the code I copied during that work.
     Let's take a look at another function: the =member= command can be
     used to check if an item exists in a list.
 
+    #+begin_src lisp
+      (if (member 1 '(3 4 1 5))
+		  (print "One is in the List")
+		  (print "One is not in the List"))
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : "One is in the List" 
     
+
+    However, the /way/ it returns true is unconventional and
+    Lisp-driven:
+
+    #+begin_src lisp
+      (print (member 1 '(3 4 1 5)))
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : (1 5) 
+
+    The main question for any Lisper when they write a function that
+    returns true or false is: *Is there anything else I could return
+    other than just t?*
+
+    This is because *all non-nil values evaluate to true*. Returning
+    more than t is essentially free.
+
+    The main reason the function =member= returns the tail of the
+    original list and not just the found value on a true result is a
+    specific edge case: looking for /nil/ in a list (which would
+    evaluate to false if it returned just /nil/.
+
+    There is another notable fuction for how it uses a rich return
+    value: =find-if=.
+
+    #+begin_src lisp
+      (print (find-if #'oddp '(2 4 5 6)))
+      (if (find-if #'oddp '(2 4 5 6))
+	  (print "There is an odd number.")
+	  (print "There is no odd number."))
+      
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : 5 
+    : "There is an odd number." 
+
+    The =find-if= function takes another function as an argument (as
+    it is a higher-order function, to be discussed in greater depth in
+    chapters 7 and 14) and returns the first (if any) member that
+    causes the supplied function to evaluate to true from the supplied
+    list.
+
+    Note, however, that the edge case mentioned above (returning
+    /nil/) is not accounted for here.
+
+    #+begin_src lisp
+      (print (find-if #'null '(2 4 nil 6)))
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : NIL 
+
+    If used as a conditional statement, a true result will evaluate to
+    false as well as a false result. This is bad, but a necessary evil
+    for =find-if= to work consistently.
+*** Comparing Stuff: eq, equal, and More
+    Asymmetry is present when comparing things, unfortunately.
+
+    There are a number of functions to compare things; the most
+    commonly used ones are: =equal=, =eq=, ===, =string-equal=, and
+    =equalp=. Knowing when to use each is important.
+**** Conrad's Rule of Thumb for Comparing Stuff
+     When in doubt, following these two steps will usually get You by.
+
+     1. Use =eq= when comparing symbols.
+     2. Use =equal= for everything else.
+**** Eq
+     The =eq= function is the simplest comparison function, which
+     makes it very fast. However, it struggles with items that are not
+     symbols.
+
+     That said, using =eq= is a must if the values being compared are
+     known to be symbols.
+     
+     #+begin_src lisp
+       (defparameter *fruit* 'apple)
+       (cond ((eq *fruit* 'apple) (print "It's an Apple"))
+	     ((eq *fruit* 'orange) (print "It's an Orange")))
+     #+end_src
+
+     #+RESULTS:
+     : 
+     : "It's an Apple" 
+
+     It's worth noting that =eq= can be used to compare conses as
+     well, though it will only return true for the *exact same call*
+     to cons. Even if the cons looks similar after the fact, it will
+     return /nil/.
+**** Equal
+     If You aren't dealing with two symbols, or such a case cannot be
+     guaranteed by the function You are writing, it is better to use
+     =equal=. It tells You when two things are /isomorphic/, meaning
+     that they look the same. It works for all basic Lisp datatypes.
+
+     #+begin_src lisp
+       (print (equal 'apple 'apple))
+       (print (equal (list 1 2 3) (list 1 2 3)))
+       (print (equal '(1 2 3) (cons 1 (cons 2 (cons 3 ())))))
+       (print (equal 5 5))
+       (print (equal 2.5 2.5))
+       (print (equal "foo" "foo"))
+       (print (equal #\a #\a))
+     #+end_src
+
+     #+RESULTS:
+     : 
+     : T 
+     : T 
+     : T 
+     : T 
+     : T 
+     : T 
+     : T 
+
+     The =equal= function can compare most things, so it is a safe
+     choice, if an inefficient one.
+**** Eql
+     The =eql= command is very similar to =eq=, but it also handles
+     the comparison of numbers and characters (leaving out things like
+     strings and lists).
+
+     #+begin_src lisp
+       (print (eql 'foo 'foo))
+       (print (eql 3.4 3.4))
+       (print (eql #\a #\a))
+     #+end_src
+
+     #+RESULTS:
+     : 
+     : T 
+     : T 
+     : T 
+**** Equalp
+     The =equalp= command is very similar to =equal=, except it can
+     handle more difficult comparisons, like strings with varying
+     capitalizations or integers to floats.
+
+     #+begin_src lisp
+       (print (equalp "Bob Smith" "bob smith"))
+       (print (equalp 0 0.0))
+     #+end_src
+
+     #+RESULTS:
+     : 
+     : T 
+     : T 
+**** Others
+     The === function handles numbers only. The =string-equal= handles
+     strings only. The =char-equal= function handles characters only.
+
+     There are others as well, but they are not common. There are a
+     bunch of different function.
+*** What We've Learned
+    This chapter was all about branching through conditionals: How
+    =nil=, ='nil=, =()=, and ='()= are all the same, and all treated
+    as false. List Eaters are really easy to make. Lisp uses lazy
+    evaluation. Using =cond= lets You do really cool conditionals. And
+    comparing things is complicated.
