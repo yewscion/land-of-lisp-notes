@@ -1073,3 +1073,116 @@ with all of the code I copied during that work.
     as false. List Eaters are really easy to make. Lisp uses lazy
     evaluation. Using =cond= lets You do really cool conditionals. And
     comparing things is complicated.
+** Chapter 5 - Building a Text Game Engine
+   This is interesting: This chapter begins by stressing that handling
+   text is not a computer's strength. As someone who has grown up
+   belly-deep in ASCII and UTF, this is an interesting statement to
+   wrestle with. I live my life through plaintext, for the most part,
+   and yet this chapter considers text to be a necessary evil best
+   kept to a minimum.
+*** The Wizard's Adventure Game
+    As is obvious by the Chapter title, we are making a game here. In
+    this game, You are a wizard's apprentice, exploring that wizard's
+    house. The game will not be complete until Chapter 17, but when it
+    is You will be able to solve puzzles and win a magical donut.
+**** Basic Requirements
+     
+    There is a picture that describes the world we are creating. Three
+    areas (rooms): a living room, an attic, and a garden. There is a
+    ladder connecting the living room to the attic, and a door
+    connecting the garden to the living room. There is no immediate
+    path between the garden and the attic.
+
+    We'll need a few actions as well as the world around us: Looking,
+    Moving, Taking Objects, and Performing Actions on Objects Held. In
+    this chapter, we are going over the first three of these.
+
+    When Looking Around (the first action), there are three kinds of
+    things to see in any location:
+
+    - Scenery
+    - Exits
+    - Objects
+*** Describing the Scenery with an Association List
+    As our world is simple, we can describe the scenery using one
+    global variable.
+
+    Below, we define this variable: =*nodes*=. It contains the list
+    and description of our three places. In essence, it gives us a way
+    to look up a piece of data (the description) attached to a
+    specific /key/ (in this case, the room name). This is called an
+    /Association List/, or an /alist/, and will be discussed more in
+    Chapter 7.
+
+    One thing to note is the absence of strings. The data below is
+    encoded entirely in more fundamental datatypes: Only Symbols and
+    Lists. This is to illustrate that *by keeping Your source data
+    structures free from assumptions regarding the output format from
+    the start, Your coding can take full advantage of Your programming
+    language.* We'll be formatting these lists and symbols into text
+    in the next chapter.
+
+    Note however that this is not a limitation of Lisp—You can work
+    directly with strings if You prefer (and will be, in Chapter 11).
+    #+begin_src lisp :results value
+      (defparameter *nodes* '((living-room (You are in the living-room. A
+      wizard is snoring loudly on the couch.))
+			     (garden (You are in a beautiful garden. There
+			     is a well in front of You.))
+			     (attic (You are in the attic. There is a giant
+			     welding torch in the corner.))))
+    #+end_src
+
+    #+RESULTS:
+    : *NODES*
+*** Describing the Location
+    The way to look up data in an /alist/ is the =assoc= function.
+
+    #+begin_src lisp :results value
+      (assoc 'garden *nodes*)
+    #+end_src
+
+    #+RESULTS:
+    : (GARDEN (YOU ARE IN A BEAUTIFUL GARDEN. THERE IS A WELL IN FRONT OF YOU.))
+
+    We can define a wrapper function around =assoc= that will return
+    the requested information only. Note the use of =cadr=.
+
+    #+begin_src lisp :results value
+      (defun describe-location (location nodes)
+	(cadr (assoc location nodes)))
+    #+end_src
+
+    #+RESULTS:
+    : DESCRIBE-LOCATION
+
+    And now we can use it to return /only/ the description.
+
+    Note that this function is /referentially transparent/: With the
+    same input, it will produce the same output, and it does nothing
+    outside of its scope and does not have side effects.
+
+    This book does not use those words, merely relating this to the
+    functional programming style.
+    #+begin_src lisp :results value
+      (describe-location 'living-room *nodes*)
+    #+end_src
+
+    #+RESULTS:
+    : (YOU ARE IN THE LIVING-ROOM. A WIZARD IS SNORING LOUDLY ON THE COUCH.)
+*** Describing the Paths
+    We're going to store the paths in a separate global variable
+    (another /alist/).
+
+    
+    #+begin_src lisp :results value
+      (defparameter *edges* '((living-room (garden west door)
+			       (attic upstairs ladder))
+			      (garden (living-room east door))
+			      (attic (living-room downstairs ladder))))
+    #+end_src
+
+    #+RESULTS:
+    : *EDGES*
+
+    
