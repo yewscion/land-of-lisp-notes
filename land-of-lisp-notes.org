@@ -1174,7 +1174,6 @@ with all of the code I copied during that work.
     We're going to store the paths in a separate global variable
     (another /alist/).
 
-    
     #+begin_src lisp :results value
       (defparameter *edges* '((living-room (garden west door)
 			       (attic upstairs ladder))
@@ -1185,4 +1184,312 @@ with all of the code I copied during that work.
     #+RESULTS:
     : *EDGES*
 
+    With this structure, we can now access things using a standard
+    phrase.
+
+    Note the use of a backtick to enable data mode here. This is
+    necessary, because we are using something called /quasiquoting/,
+    where we can flip back and forth between data mode and code mode.
+
+    I personally think it's cool how it looks like a little lever on
+    the outside of the parens, with up (not active) being in data mode
+    and down (active) being in code mode.
+
+    This flipping is one of the many benefits to working in symbols
+    instead of directly in strings.
     
+    #+begin_src lisp :results value
+      (defun describe-path (edge)
+	`(there is a ,(caddr edge) going ,(cadr edge) from here.))
+    #+end_src
+
+    #+RESULTS:
+    : DESCRIBE-PATH
+
+    We are then going to compose this function into one that lets us
+    describe all the paths in a single location. That function will be
+    =describe-paths=.
+
+    It will do the following:
+
+    1. Find the relevant edges.
+    2. Convert the edges to descriptions.
+    3. Join the descriptions.
+       
+    #+begin_src lisp :results value
+      (defun describe-paths (location edges)
+	(apply #'append (mapcar #'describe-path (cdr (assoc location edges)))))
+    #+end_src
+
+    #+RESULTS:
+    : DESCRIBE-PATHS
+
+    Let's test that right away.
+
+    #+begin_src lisp :results value
+      (describe-paths 'living-room *edges*)
+    #+end_src
+
+    #+RESULTS:
+    : (THERE IS A DOOR GOING WEST FROM HERE. THERE IS A LADDER GOING UPSTAIRS FROM
+    :  HERE.)
+
+    Let's step through the above-mentioned steps.
+**** Find the Relevant Edges
+     The inner part, =(cdr (assoc location edges))=, is the focus
+     here.
+
+     Because of our data structure (an /alist/), we can get the full
+     list of edges for a specific room using =assoc=. And because of
+     the structure of lists and the /way/ we stored the data in our
+     /alist/, we can simply call =cdr= to extract the list of edges.
+**** Convert the Edges to Descriptions
+     Stepping out a bit, we'll now focus on =(mapcar #'describe-path
+     result-from-step-1)=.
+
+     The =mapcar= function takes a function and a list, and applies
+     that function to each member of the list. According the the
+     documentation, it can actually take more than one list, as well.
+
+     #+begin_src lisp :results value
+       (mapcar #'sqrt '(1 2 3 4 5))
+     #+end_src
+
+     #+RESULTS:
+     : (1.0 1.4142135 1.7320508 2.0 2.236068)
+
+     =mapcar= is a /higher-order function/, which is a function that
+     can take other functions as parameters.
+
+     The =#'x= notation is a shorthand for =(function x)=. Calling
+     functions as values in Common Lisp requires this, as Common Lisp
+     is a /Lisp-2/ language: functions are in a different namespace
+     than variables, and thus can have the same names. We'll discuss
+     this difference, and namespaces in general, in depth in
+     Chapter 16. Scheme, in contrast to Common Lisp, is a /Lisp-1/,
+     which basically means there is only one namespace, and therefore
+     only one instance of each name, function or otherwise.
+
+     We are using =mapcar= to apply our =describe-path= function to
+     each list of relevant edges.
+**** Join the Descriptions
+     Finally, we'll discuss the outmost part of the =describe-paths=
+     function: =(apply #'append (result-from-step-2))=.
+
+     We are joining all of the generated lists together, here. The
+     =append= function does this, and we use it easily with another
+     function, =apply=. The =apply= function passes each item in a
+     supplied list to the target function, as opposed to =mapcar=,
+     which applies a function to each item in a list in turn.
+
+     Note, however, that for very large lists implementing aggregation
+     this way may be inefficient, as =apply= passes each element in a
+     separate call.
+**** Wrapping Up
+     This basic style, passing complicated data through several
+     functions in turn, is a very common practice in Common Lisp, and
+     Lisp in general. /Composability/ is core to the Lisp mindset.
+*** Describing Objects at a Specific Location
+    Similarly to above, we are going to use a global list to store the
+    objects, and then store the locations of those objects in an
+    /alist/.
+
+    #+begin_src lisp :results value
+      (defparameter *objects* '(whiskey bucket frog chain))
+      (defparameter *object-locations* '((whiskey living-room)
+					 (bucket living-room)
+					 (chain garden)
+					 (frog garden)))
+    #+end_src
+
+    #+RESULTS:
+    : *OBJECT-LOCATIONS*
+
+    To identify the objects in a current location, we are going to
+    compose a big function chain again; this one will be called
+    =objects-at=.
+
+    Inside =objects-at=, we declare a local function using the
+    =labels= function. It seems we've used the =labels= function
+    before, but I failed to remember it. =labels= basically allows You
+    to define local functions. Declaring functions locally here is
+    useful because we will definitely not be using the functions
+    outside of that scope, and therefore keep our environment cleaner.
+
+    The =at-loc-p= function is just such a function, and that's why we
+    declare it using =labels=. It will take the symbol for an object
+    and return =t= or =nil= (using =eq=, as we are comparing symbols)
+    regarding the objects presence at a location =loc=.
+
+    The naming of the function =at-loc-p= ends with "-p" due to a
+    naming convention in Lisp. Predicates (functions that return true
+    or false) are usually named with a "p" suffix to make them easy to
+    identify. This is also done in emacs, as I am aware.
+
+    There is another function introduced here: =remove-if-not=. It
+    returns a sequence of values without any that do not satisfy a
+    specific predicate. Here, we are using our =at-loc-p= predicate on
+    all of the objects =objs= supplied to the =objects-at= function.
+
+    It's interesting to me the way that our local function =at-loc-p=
+    uses the scope-wide available variable =obj-locs=. I would likely
+    not allow this in my own code, as it makes =at-loc-p= less
+    /referentially transparent/.
+
+    #+begin_src lisp :results value
+      (defun objects-at (loc objs obj-locs)
+	(labels ((at-loc-p (obj)
+		   (eq (cadr (assoc obj obj-locs)) loc)))
+	  (remove-if-not #'at-loc-p objs)))
+    #+end_src
+
+    #+RESULTS:
+    : OBJECTS-AT
+
+    Let's test it.
+
+    #+begin_src lisp :results value
+      (objects-at 'living-room *objects* *object-locations*)
+    #+end_src
+
+    #+RESULTS:
+    : (WHISKEY BUCKET)
+
+    We can then compose =objects-at= into a new function that is not
+    dissimilar to the previous function =describe-paths=. This one
+    will be called =describe-objects=.
+
+    In this listing, We define a local function using =labels= again
+    (kind of like a =let= for functions) called =describe-obj=, which
+    forms a sentence describing the object's presence. We use
+    /quasiquoting/ again for this. Then we call =objects-at= in the
+    exact same way as we called =describe-path= in the other.
+
+    #+begin_src lisp :results value
+      (defun describe-objects (loc objs obj-loc)
+	(labels ((describe-obj (obj)
+		   `(you see a ,obj on the floor.)))
+	  (apply #'append (mapcar #'describe-obj (objects-at loc objs obj-loc)))))
+    #+end_src
+
+    #+RESULTS:
+    : DESCRIBE-OBJECTS
+
+    Let's test this too.
+
+    #+begin_src lisp :results value
+      (describe-objects 'living-room *objects* *object-locations*)
+    #+end_src
+
+    #+RESULTS:
+    : (YOU SEE A WHISKEY ON THE FLOOR. YOU SEE A BUCKET ON THE FLOOR.)
+
+    Woo!
+*** Describing it All
+    We're gonna put it all together now, and make a =look= function.
+
+    We're going to track the player's current location using a global
+    variable again. This one will be called, creatively, =*location*=.
+
+    We'll initialize it to the living-room, as this will be the
+    location of the player at the start of the game.
+    
+    #+begin_src lisp :results value
+      (defparameter *location* 'living-room)
+    #+end_src
+
+    #+RESULTS:
+    : *LOCATION*
+
+    Now we can write the =look= function.
+
+    Because of the use of global variables (i.e. variables outside of
+    the scope of the function that are changed), this implementation
+    is not functional. The choice here was to easily facilitate the
+    player simply typing =look=.
+
+    The components of the =look= function (the =describe-= functions,
+    for instance) were all written in the functional style. I presume
+    this one wasn't because it illustrates the difference between a
+    functional approach and a non-functional approach.
+    #+begin_src lisp :results value
+      (defun look ()
+	(append (describe-location *location* *nodes*)
+		(describe-paths *location* *edges*)
+		(describe-objects *location* *objects* *object-locations*)))
+    #+end_src
+
+    #+RESULTS:
+    : LOOK
+
+    Let's test it.
+
+    #+begin_src lisp :results value
+      (look)
+    #+end_src
+
+    #+RESULTS:
+    : (YOU ARE IN THE LIVING-ROOM. A WIZARD IS SNORING LOUDLY ON THE COUCH. THERE IS
+    :  A DOOR GOING WEST FROM HERE. THERE IS A LADDER GOING UPSTAIRS FROM HERE. YOU
+    :  SEE A WHISKEY ON THE FLOOR. YOU SEE A BUCKET ON THE FLOOR.)
+*** Walking Around in Our World
+    We're going to make another non-functional function to walk around
+    using our global variables.
+
+    We first look up the available directions in the =*edges*=
+    alist. We then feed this to the =find= function to locate the
+    matching path. The =find= function searches a list for a matching
+    item, and returns that item. This becomes the variable =next= (and
+    =next= is =nil= if not found).
+
+    The new part here is a /keyword parameter/, which lets You access
+    special features a function can have in Common Lisp by passing in
+    parameters to the end of the call. Here, we are using the /keyword
+    parameter/ =:key=, which we use to ensure =find= matches the path
+    (direction) with the =cadr= of the available paths, which it so
+    happens will be our directions.
+
+    We'll discuss the =:= prefix more in Chapter 7, but it seems right
+    now to indicate /keyword parameters/. But the syntax for /keyword
+    parameters/ is a name with a =:= prefix (like =:key=) followed by
+    a value (like =#'cadr=).
+
+    We then check =next= using =if= and Common Lisp's special handling
+    of =false= and =nil=. If =next= has a value, then =if= moves the
+    player. If not, that means the direction is impossible, and it
+    tells the player as much.
+    
+    #+begin_src lisp :results value
+      (defun walk (direction)
+	(let ((next (find direction
+			  (cdr (assoc *location* *edges*))
+			  :key #'cadr)))
+	  (if next
+	      (progn (setf *location* (car next))
+		     (look))
+	      '(you cannot go that way.))))
+    #+end_src
+
+    #+RESULTS:
+    : WALK
+
+    Let's test it out.
+
+    #+begin_src lisp :results value
+      (walk 'west)
+    #+end_src
+
+    #+RESULTS:
+    : (YOU ARE IN A BEAUTIFUL GARDEN. THERE IS A WELL IN FRONT OF YOU. THERE IS A
+    :  DOOR GOING EAST FROM HERE. YOU SEE A FROG ON THE FLOOR. YOU SEE A CHAIN ON THE
+    :  FLOOR.)
+
+    Right now, our program has a pretty big wart: You have to enter in
+    the direction with a preceding quote. We're going to address this
+    in the next chapter, by making a custom REPL specifically for
+    playing text adventures.
+
+    We could also use /macros/ to accomplish this in an unflavored
+    Lisp REPL. We'll learn about htis approach in Chapter 16.
+*** Picking up Objects
+    Next, we're gonna enable picking up items.
