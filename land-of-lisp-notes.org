@@ -1,4 +1,4 @@
-#+PROPERTY: header-args :results replace verbatim output
+#+PROPERTY: header-args :results replace verbatim value
 These are my notes while working through the LoL book, interpersed
 with all of the code I copied during that work.
 
@@ -14,9 +14,6 @@ with all of the code I copied during that work.
      (+ 3 (* 2 4 ))
    #+end_src
 
-   #+RESULTS:
-   : 11
-
    The brief history outlines LISP as coming from a more mathematical
    background than a necessarily compsci background. John McCarthy
    created LISP in 1959. The goal was to make a programming language
@@ -29,11 +26,6 @@ with all of the code I copied during that work.
      (print "This File Contains")
      (print "Two Lines of Lisp")
    #+end_src
-
-   #+RESULTS:
-   : 
-   : "This File Contains" 
-   : "Two Lines of Lisp" 
 ** Chapter 2 - Creating Your First Lisp Program
    We're going to be developing a guess-my-number game.
 *** Defining Global Variables
@@ -41,18 +33,10 @@ with all of the code I copied during that work.
      (defparameter *small* 1)
      (defparameter *big* 100)
    #+end_src
-
-   #+RESULTS:
-   : *BIG*
    #+begin_src lisp :results output
      (print *small*)
      (print *big*)
    #+end_src
-
-   #+RESULTS:
-   : 
-   : 1 
-   : 100 
 
    The book goes on to talk about global variables, and the differences
    between defparameter (overwrites old value if it exists) and defvar
@@ -62,9 +46,6 @@ with all of the code I copied during that work.
      (defun guess-my-number ()
        (ash (+ *small* *big*) -1))
    #+end_src
-
-   #+RESULTS:
-   : GUESS-MY-NUMBER
 
    We've defined our first function.
 
@@ -85,9 +66,6 @@ with all of the code I copied during that work.
    #+begin_src lisp
      (guess-my-number)
    #+end_src
-
-   #+RESULTS:
-   : 50
 *** Subfunctions
    This was the expected output.
 
@@ -101,9 +79,6 @@ with all of the code I copied during that work.
        (guess-my-number))
    #+end_src
 
-   #+RESULTS:
-   : BIGGER
-
    Let's finish playing this round, now. My number will be 37.
 
    #+begin_src lisp
@@ -111,9 +86,6 @@ with all of the code I copied during that work.
      (smaller)
      (bigger)
    #+end_src
-
-   #+RESULTS:
-   : 37
 
    Not bad. Now, to reset it, we'll need a function that sets those
    global variables back to their starting values. I'm going to try to
@@ -126,9 +98,6 @@ with all of the code I copied during that work.
        (guess-my-number))
    #+end_src
 
-   #+RESULTS:
-   : MY-RESET
-
    Let's keep playing. New Number: 92.
 
    #+begin_src lisp
@@ -140,9 +109,6 @@ with all of the code I copied during that work.
      (bigger)
     
    #+end_src
-
-   #+RESULTS:
-   : 92
 
    We've done it! Time to review the book; I wonder how different it
    will be?
@@ -166,9 +132,6 @@ with all of the code I copied during that work.
        (+ a b))
    #+end_src
 
-   #+RESULTS:
-   : 11
-
    Once the let function ends, we can no longer reference those
    variables as they were defined. (+ a b) will no longer work.
 
@@ -184,9 +147,6 @@ with all of the code I copied during that work.
     
    #+end_src
 
-   #+RESULTS:
-   : 9
-
    flet is the simpler one, which behaves much the way let does. It's
    big limitation is that it cannot define multiple functions that
    reference each other, or a function that calls itself. For either of
@@ -199,9 +159,6 @@ with all of the code I copied during that work.
 		(+ (a n) 6)))
        (b 10))
    #+end_src
-
-   #+RESULTS:
-   : 21
 
    One reason to use flet over labels would be to use a global function
    of the same name: In labels, it would instead refer to itself.
@@ -230,9 +187,6 @@ with all of the code I copied during that work.
        (* n n))
    #+end_src
 
-   #+RESULTS:
-   : SQUARE
-
    The above function, =square=, is used to examine this further.
 
    This is a /function declaration/, which creates a new function that
@@ -255,9 +209,6 @@ with all of the code I copied during that work.
     #+begin_src lisp
       (eq 'fooo 'FoOo)
     #+end_src
-
-    #+RESULTS:
-    : T
    
 *** Numbers
    
@@ -268,12 +219,6 @@ with all of the code I copied during that work.
       (print (expt 53 53))
       (print (/ 2 3))
     #+end_src
-
-    #+RESULTS:
-    : 
-    : 2.0 
-    : 24356848165022712132477606520104725518533453128685640844505130879576720609150223301256150373 
-    : 2/3 
 
     If You work with both integers and floating point numbers, the
     integers will become "poisoned" and a floating point number will be
@@ -292,9 +237,6 @@ with all of the code I copied during that work.
     #+begin_src lisp
       (princ "Tutti Frutti")
     #+end_src
-
-    #+RESULTS:
-    : Tutti Frutti
    
     (The =princ= function does /not/ output a newline, and is therefore
     less READable than the =print= function.)
@@ -315,18 +257,12 @@ with all of the code I copied during that work.
    (expt 2 3)
  #+end_src
 
- #+RESULTS:
- : 8
-
  When lisp reads the parameters, it stays in /Code Mode/. This way, You
  can nest forms indefinitely, as You may need to.
 
  #+begin_src lisp
    (expt 2 (+ 3 4))
  #+end_src
-
- #+RESULTS:
- : 128
 
  *Inner forms are always executed before outer forms.*
 
@@ -362,9 +298,6 @@ with all of the code I copied during that work.
    (cons 'chicken 'pork)
  #+end_src
 
- #+RESULTS:
- : (CHICKEN . CAT)
-
  It returns the Cons cell it creates, printing it in the dotted pair
  notation: =(CHICKEN . CAT)=.
 
@@ -386,11 +319,6 @@ with all of the code I copied during that work.
    (cons 'pork (cons 'beef (cons 'chicken ())))
  #+end_src
 
- #+RESULTS:
- - PORK
- - BEEF
- - CHICKEN
-
  In short: *A chain of cons cells and a list are the same thing in
  Lisp*.
 
@@ -406,9 +334,6 @@ with all of the code I copied during that work.
  #+begin_src lisp
    (cadadr '((perl c cpp) (lisp clojure haskell) scheme)) 
  #+end_src
-
- #+RESULTS:
- : CLOJURE
 
  In short, we've learned:
 
@@ -428,9 +353,6 @@ with all of the code I copied during that work.
     #+begin_src lisp
       (list 'pork 'beef 'chicken)
     #+end_src
-
-    #+RESULTS:
-    : (PORK BEEF CHICKEN)
 *** Nested Lists
     Lists can contain other lists.
 
@@ -444,13 +366,6 @@ with all of the code I copied during that work.
       (print (cdr (car '((peas carrots tomatoes) (pork beef chicken)))))
       (print (cdar '((peas carrots tomatoes) (pork beef chicken))))
     #+end_src
-
-    #+RESULTS:
-    : 
-    : (PEAS CARROTS TOMATOES) 
-    : (CARROTS TOMATOES) 
-    : (CARROTS TOMATOES) 
-    : (CARROTS TOMATOES)
 
     You can also create the initial list from above using /solely/
     =cons=, which is really what the above is doing behind the scenes.
@@ -469,9 +384,6 @@ with all of the code I copied during that work.
 	()))
     #+end_src
 
-    #+RESULTS:
-    : ((PEAS CARROTS TOMATOES) (PORK BEEF CHICKEN))
-
     Here are some c*r functions operating on the list: ='((peas carrots
     tomatoes) (pork beef chicken) duck)=. Note that these only go 4
     levels deep: Anything deeper than that will need to be written by
@@ -482,13 +394,6 @@ with all of the code I copied during that work.
       (print (cddar '((peas carrots tomatoes) (pork beef chicken) duck)))
       (print (cadadr '((peas carrots tomatoes) (pork beef chicken) duck)))
     #+end_src
-
-    #+RESULTS:
-    : 
-    : (DUCK) 
-    : DUCK 
-    : (TOMATOES) 
-    : BEEF 
 *** What we've Learned
     We discussed basic Lisp syntax, including the benefits of
     parentheses, lists, and cons/car/cdr.
@@ -508,9 +413,6 @@ with all of the code I copied during that work.
 	  'i-am-false)
     #+end_src
 
-    #+RESULTS:
-    : I-AM-FALSE
-
     Any non-empty list will evaluate to true.
 
     #+begin_src lisp
@@ -518,9 +420,6 @@ with all of the code I copied during that work.
 	  'i-am-true
 	  'i-am-false)
     #+end_src
-
-    #+RESULTS:
-    : I-AM-TRUE
 
     This allows us to process /recursion/ very easily, by taking items
     from the front of a list and sending the rest back to the function
@@ -538,9 +437,6 @@ with all of the code I copied during that work.
       (my-length '(list with four symbols))
     #+end_src
 
-    #+RESULTS:
-    : 4
-
     Lists in Lisp are recursive to begin with (conses of conses of
     conses) so consuming a list this way is a natural and efficient
     progression. However, calling Yourself recursively can sometime
@@ -557,12 +453,6 @@ with all of the code I copied during that work.
       (print (eq '() ()))
       (print (eq '() 'nil))
     #+end_src
-
-    #+RESULTS:
-    : 
-    : T 
-    : T 
-    : T 
 
     ='()=, =()=, ='nil=, and =nil= are all equavalent, and all
     represent an empty list. =()= and =nil= are special forms, because
@@ -600,12 +490,6 @@ with all of the code I copied during that work.
 	  (print "yup"))
     #+end_src
 
-    #+RESULTS:
-    : 
-    : "yup" 
-    : "nope" 
-    : "yup"
-
     As =nil= is equivalent to an empty list, it then becomes obvious
     that testing for an empty list is important. And, because an empty
     list is treated as =false=, it is trivial to test for one.
@@ -623,12 +507,6 @@ with all of the code I copied during that work.
 	  (print "The original value was nil."))
     #+end_src
 
-    #+RESULTS:
-    : 
-    : "Not Empty" 
-    : "Empty" 
-    : "The original value was nil." 
-
     Usually, when a function is executed in lisp, all of the
     expressions after a function are evaluated before the function
     itself is. However, =if= doesn't follow that rule. This makes
@@ -640,9 +518,6 @@ with all of the code I copied during that work.
 	  'odd-number
 	  (/ 1 0))
     #+end_src
-
-    #+RESULTS:
-    : ODD-NUMBER
 
     Since only the chosen expression is evaluated, the =(/ 1 0)= else
     statement is never touched, and therefore does not cause an error.
@@ -681,11 +556,6 @@ with all of the code I copied during that work.
 		 (print "odd number"))
 	  'even-number)
     #+end_src
-
-    #+RESULTS:
-    : 
-    : T 
-    : "odd number" 
 *** Beyond if: when and unless
     There are a number of commands that include an /implicit
     progn/. We'll look at two here, =when= and =unless=.
@@ -714,13 +584,6 @@ with all of the code I copied during that work.
 	(print "Yup")
 	(print "4 is not Odd."))
     #+end_src
-
-    #+RESULTS:
-    : 
-    : "Yup" 
-    : "5 is indeed Odd." 
-    : "Yup" 
-    : "4 is not Odd." 
 
 *** The Command that Does it All: cond
     If You don't want to compromise, and want the greatest degree of
@@ -773,12 +636,6 @@ with all of the code I copied during that work.
       (pudding-eater 'george-clooney)
     #+end_src
 
-    #+RESULTS:
-    : 
-    : "I hope You choked on my Pudding, Johnny." 
-    : USELESS-OLD-JOHNNY 
-    : "Why'd You eat my pudding, stranger?" 
-
 *** Branching with case
     As I noted myself, the =cond= example reminded me of switch-case
     in C++. It is so commonly used to simply compare a single input to
@@ -820,12 +677,6 @@ with all of the code I copied during that work.
       (print *arch-enemy*)
       (pudding-eater-case 'george-clooney)
      #+end_src
-
-     #+RESULTS:
-     : 
-     : "I hope You choked on my Pudding, Johnny." 
-     : USELESS-OLD-JOHNNY 
-     : "Why'd You eat my pudding, 
 *** Using the Stealth Conditionals: and and or
     The conditionals =and= and =or= are simple mathematical
     operators. They let You chain conditionals together.
@@ -843,13 +694,6 @@ with all of the code I copied during that work.
       (print (or (oddp 8) (oddp 6) (oddp 4)))
     #+end_src
 
-    #+RESULTS:
-    : 
-    : T 
-    : NIL 
-    : T 
-    : NIL 
-
     However, due to the way Common Lisp handles =true= and =false=, we
     can use =and= and =or= for conditional behavior.
 
@@ -863,11 +707,6 @@ with all of the code I copied during that work.
       (print *is-it-even*)
     #+end_src
 
-    #+RESULTS:
-    : 
-    : T 
-    : T 
-
     However, if we do the same with an odd number, the global variable
     remains unchanged.
 
@@ -876,11 +715,6 @@ with all of the code I copied during that work.
       (print (or (oddp 5) (setf *is-it-even-2* t)))
       (print *is-it-even-2*)
     #+end_src
-
-    #+RESULTS:
-    : 
-    : T 
-    : NIL 
 
     This is because Common Lisp uses /Shortcut Boolean Evaluation/,
     which basically means that once Lisp determines an earlier
@@ -905,10 +739,6 @@ with all of the code I copied during that work.
 		  (print "One is in the List")
 		  (print "One is not in the List"))
     #+end_src
-
-    #+RESULTS:
-    : 
-    : "One is in the List" 
     
 
     However, the /way/ it returns true is unconventional and
@@ -917,10 +747,6 @@ with all of the code I copied during that work.
     #+begin_src lisp
       (print (member 1 '(3 4 1 5)))
     #+end_src
-
-    #+RESULTS:
-    : 
-    : (1 5) 
 
     The main question for any Lisper when they write a function that
     returns true or false is: *Is there anything else I could return
@@ -945,11 +771,6 @@ with all of the code I copied during that work.
       
     #+end_src
 
-    #+RESULTS:
-    : 
-    : 5 
-    : "There is an odd number." 
-
     The =find-if= function takes another function as an argument (as
     it is a higher-order function, to be discussed in greater depth in
     chapters 7 and 14) and returns the first (if any) member that
@@ -962,10 +783,6 @@ with all of the code I copied during that work.
     #+begin_src lisp
       (print (find-if #'null '(2 4 nil 6)))
     #+end_src
-
-    #+RESULTS:
-    : 
-    : NIL 
 
     If used as a conditional statement, a true result will evaluate to
     false as well as a false result. This is bad, but a necessary evil
@@ -995,10 +812,6 @@ with all of the code I copied during that work.
 	     ((eq *fruit* 'orange) (print "It's an Orange")))
      #+end_src
 
-     #+RESULTS:
-     : 
-     : "It's an Apple" 
-
      It's worth noting that =eq= can be used to compare conses as
      well, though it will only return true for the *exact same call*
      to cons. Even if the cons looks similar after the fact, it will
@@ -1019,16 +832,6 @@ with all of the code I copied during that work.
        (print (equal #\a #\a))
      #+end_src
 
-     #+RESULTS:
-     : 
-     : T 
-     : T 
-     : T 
-     : T 
-     : T 
-     : T 
-     : T 
-
      The =equal= function can compare most things, so it is a safe
      choice, if an inefficient one.
 **** Eql
@@ -1041,12 +844,6 @@ with all of the code I copied during that work.
        (print (eql 3.4 3.4))
        (print (eql #\a #\a))
      #+end_src
-
-     #+RESULTS:
-     : 
-     : T 
-     : T 
-     : T 
 **** Equalp
      The =equalp= command is very similar to =equal=, except it can
      handle more difficult comparisons, like strings with varying
@@ -1056,11 +853,6 @@ with all of the code I copied during that work.
        (print (equalp "Bob Smith" "bob smith"))
        (print (equalp 0 0.0))
      #+end_src
-
-     #+RESULTS:
-     : 
-     : T 
-     : T 
 **** Others
      The === function handles numbers only. The =string-equal= handles
      strings only. The =char-equal= function handles characters only.
@@ -1132,18 +924,12 @@ with all of the code I copied during that work.
 			     (attic (You are in the attic. There is a giant
 			     welding torch in the corner.))))
     #+end_src
-
-    #+RESULTS:
-    : *NODES*
 *** Describing the Location
     The way to look up data in an /alist/ is the =assoc= function.
 
     #+begin_src lisp :results value
       (assoc 'garden *nodes*)
     #+end_src
-
-    #+RESULTS:
-    : (GARDEN (YOU ARE IN A BEAUTIFUL GARDEN. THERE IS A WELL IN FRONT OF YOU.))
 
     We can define a wrapper function around =assoc= that will return
     the requested information only. Note the use of =cadr=.
@@ -1152,9 +938,6 @@ with all of the code I copied during that work.
       (defun describe-location (location nodes)
 	(cadr (assoc location nodes)))
     #+end_src
-
-    #+RESULTS:
-    : DESCRIBE-LOCATION
 
     And now we can use it to return /only/ the description.
 
@@ -1167,9 +950,6 @@ with all of the code I copied during that work.
     #+begin_src lisp :results value
       (describe-location 'living-room *nodes*)
     #+end_src
-
-    #+RESULTS:
-    : (YOU ARE IN THE LIVING-ROOM. A WIZARD IS SNORING LOUDLY ON THE COUCH.)
 *** Describing the Paths
     We're going to store the paths in a separate global variable
     (another /alist/).
@@ -1180,9 +960,6 @@ with all of the code I copied during that work.
 			      (garden (living-room east door))
 			      (attic (living-room downstairs ladder))))
     #+end_src
-
-    #+RESULTS:
-    : *EDGES*
 
     With this structure, we can now access things using a standard
     phrase.
@@ -1203,9 +980,6 @@ with all of the code I copied during that work.
 	`(there is a ,(caddr edge) going ,(cadr edge) from here.))
     #+end_src
 
-    #+RESULTS:
-    : DESCRIBE-PATH
-
     We are then going to compose this function into one that lets us
     describe all the paths in a single location. That function will be
     =describe-paths=.
@@ -1221,18 +995,11 @@ with all of the code I copied during that work.
 	(apply #'append (mapcar #'describe-path (cdr (assoc location edges)))))
     #+end_src
 
-    #+RESULTS:
-    : DESCRIBE-PATHS
-
     Let's test that right away.
 
     #+begin_src lisp :results value
       (describe-paths 'living-room *edges*)
     #+end_src
-
-    #+RESULTS:
-    : (THERE IS A DOOR GOING WEST FROM HERE. THERE IS A LADDER GOING UPSTAIRS FROM
-    :  HERE.)
 
     Let's step through the above-mentioned steps.
 **** Find the Relevant Edges
@@ -1254,9 +1021,6 @@ with all of the code I copied during that work.
      #+begin_src lisp :results value
        (mapcar #'sqrt '(1 2 3 4 5))
      #+end_src
-
-     #+RESULTS:
-     : (1.0 1.4142135 1.7320508 2.0 2.236068)
 
      =mapcar= is a /higher-order function/, which is a function that
      can take other functions as parameters.
@@ -1302,9 +1066,6 @@ with all of the code I copied during that work.
 					 (frog garden)))
     #+end_src
 
-    #+RESULTS:
-    : *OBJECT-LOCATIONS*
-
     To identify the objects in a current location, we are going to
     compose a big function chain again; this one will be called
     =objects-at=.
@@ -1343,17 +1104,11 @@ with all of the code I copied during that work.
 	  (remove-if-not #'at-loc-p objs)))
     #+end_src
 
-    #+RESULTS:
-    : OBJECTS-AT
-
     Let's test it.
 
     #+begin_src lisp :results value
       (objects-at 'living-room *objects* *object-locations*)
     #+end_src
-
-    #+RESULTS:
-    : (WHISKEY BUCKET)
 
     We can then compose =objects-at= into a new function that is not
     dissimilar to the previous function =describe-paths=. This one
@@ -1372,17 +1127,11 @@ with all of the code I copied during that work.
 	  (apply #'append (mapcar #'describe-obj (objects-at loc objs obj-loc)))))
     #+end_src
 
-    #+RESULTS:
-    : DESCRIBE-OBJECTS
-
     Let's test this too.
 
     #+begin_src lisp :results value
       (describe-objects 'living-room *objects* *object-locations*)
     #+end_src
-
-    #+RESULTS:
-    : (YOU SEE A WHISKEY ON THE FLOOR. YOU SEE A BUCKET ON THE FLOOR.)
 
     Woo!
 *** Describing it All
@@ -1397,9 +1146,6 @@ with all of the code I copied during that work.
     #+begin_src lisp :results value
       (defparameter *location* 'living-room)
     #+end_src
-
-    #+RESULTS:
-    : *LOCATION*
 
     Now we can write the =look= function.
 
@@ -1419,19 +1165,11 @@ with all of the code I copied during that work.
 		(describe-objects *location* *objects* *object-locations*)))
     #+end_src
 
-    #+RESULTS:
-    : LOOK
-
     Let's test it.
 
     #+begin_src lisp :results value
       (look)
     #+end_src
-
-    #+RESULTS:
-    : (YOU ARE IN THE LIVING-ROOM. A WIZARD IS SNORING LOUDLY ON THE COUCH. THERE IS
-    :  A DOOR GOING WEST FROM HERE. THERE IS A LADDER GOING UPSTAIRS FROM HERE. YOU
-    :  SEE A WHISKEY ON THE FLOOR. YOU SEE A BUCKET ON THE FLOOR.)
 *** Walking Around in Our World
     We're going to make another non-functional function to walk around
     using our global variables.
@@ -1470,19 +1208,11 @@ with all of the code I copied during that work.
 	      '(you cannot go that way.))))
     #+end_src
 
-    #+RESULTS:
-    : WALK
-
     Let's test it out.
 
     #+begin_src lisp :results value
       (walk 'west)
     #+end_src
-
-    #+RESULTS:
-    : (YOU ARE IN A BEAUTIFUL GARDEN. THERE IS A WELL IN FRONT OF YOU. THERE IS A
-    :  DOOR GOING EAST FROM HERE. YOU SEE A FROG ON THE FLOOR. YOU SEE A CHAIN ON THE
-    :  FLOOR.)
 
     Right now, our program has a pretty big wart: You have to enter in
     the direction with a preceding quote. We're going to address this
@@ -1493,3 +1223,154 @@ with all of the code I copied during that work.
     Lisp REPL. We'll learn about htis approach in Chapter 16.
 *** Picking up Objects
     Next, we're gonna enable picking up items.
+
+    Basically, the concept will be that when You pick something up it
+    will modify =*object-locations*= by pushing a new item to it,
+    which will associate the object with a ='body= symbol. First,
+    we'll check to ensure that the object is there to pick up by using
+    =member= on the output of =objects-at=. If it isn't, we'll tell
+    the user they can't do that. Our if structure will be =cond=,
+    since it is the most versatile.
+
+    #+begin_src lisp
+      (defun pickup (object)
+	(cond ((member object
+		       (objects-at *location* *objects* *object-locations*))
+	       (push (list object 'body) *object-locations*)
+	       `(you are now carrying the ,object))
+	      (t '(you cannot get that.))))
+    #+end_src
+
+    #+RESULTS:
+    : PICKUP
+
+    I'm honestly not a huge fan of this design, at least for now.. The
+    global variables are not only a hotbed for unforeseen errors, but
+    they seem as though they will only grow over time. Alists are only
+    really efficient when small, and also, there is no utility I can
+    see added to the program by maintaining a history like this.
+
+    But, I understand the purpose pedagogically. We're using a new
+    function, =push=, which inserts an item at the front of an
+    existing list. I'm familiar with pushing and popping, so that
+    makes sense to me. The interesting thing is that it dives into the
+    implementation; =(push x *list*)= is described as identical to
+    =(setf *list* (cons x *list*))=. The =setf= function here is like
+    =setq=, but works with more structures than simply symbols.
+
+    The growing alist of historical associations is apparently a
+    common Lisp idiom. Because the =assoc= function returns the first
+    result it finds, so long as You push new items to the front of the
+    list it will appear to be a mutable value when it really is
+    not. Interesting, and fairly functional, now that I've thought
+    through it.
+
+    We're now going to try out our =pickup= function.
+
+    #+begin_src lisp
+      (walk 'east)
+      (pickup 'whiskey)
+    #+end_src
+
+    #+RESULTS:
+    : (YOU ARE NOW CARRYING THE WHISKEY)
+
+    It worked!
+*** Checking our Inventory
+    Checking our inventory is basically going to be a utility function
+    to describe "objects at the 'body location".
+
+    #+begin_src lisp
+      (defun inventory ()
+	(cons 'items- (objects-at 'body *objects* *object-locations*)))
+    #+end_src
+
+    #+RESULTS:
+    : INVENTORY
+
+    Let's try it out.
+
+    #+begin_src lisp
+      (inventory)
+    #+end_src
+
+    #+RESULTS:
+    : (ITEMS- WHISKEY)
+
+    This ends our exploration of a basic text adventure engine, for
+    now. We will be adding a mechanism for actually manipulating
+    objects (not just changing their locations) in Chapter 17.
+
+    In the next chapter, we are going to improving the UI by
+    implementing an actual parser instead of relying on plain lisp
+    code.
+*** What I've Learned
+    We made a simple game engine.
+
+    We can represent a world as a graph, with nodes and edges. You can
+    store these items in an alist, which allows You to look up
+    properties of symbols using =assoc=. You can use /Quasiquoting/ to
+    insert bits of code into data, as opposed to the other way around
+    (Quoting to insert small bits of data in code). We learned about
+    /Higher Order Functions/ which accept functions as arguments, like
+    =mapcar=. You can simulate mutation in an alist using =push= to
+    add a redundant key with a new value, since =assoc= will always
+    return the first result it finds.
+** Chapter 6 - Interacting with the World: Reading and Printing in Lisp
+   We begin by calling out that all of the code we've learned so far
+   is self contained. We're specifically going to focus on UI, and
+   make a command line for our game engine from Chapter 5. To do that,
+   we need to print text to the screen, and read it from the user. The
+   functions to accomplish this are =print= and =read=.
+*** Printing to the Screen
+    The =print= function prints things to the output, usually the
+    screen.
+
+    #+begin_src lisp :results output verbatim
+      (print "foo")
+      (progn (print "this")
+	     (print "is")
+	     (print "a")
+	     (print "test"))
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : "foo" 
+    : "this" 
+    : "is" 
+    : "a" 
+    : "test"
+    
+    They mention that, if You run the =print= command in a REPL, the
+    result is shown twice: Once for the return value of the =print=
+    command, and once for its side effect, which is printing the text
+    that follows it with a newline *before* it and a space *after* it.
+
+    If You don't want these other characters, You can instead use
+    =prin1= (which is "prin" followed by the number 1, not the letter
+    l) to print the arguments on one line.
+
+    #+begin_src lisp :results output verbatim
+      (prin1 "foo")
+      (progn (prin1 "this")
+	     (prin1 "is")
+	     (prin1 "a")
+	     (prin1 "test"))
+      
+    #+end_src
+
+    #+RESULTS:
+    : foo""this""is""a""test
+
+
+    The =prin1= command is used a lot in more serious Lisp code,
+    because it is simpler and does less, giving You more control. The
+    =print= function is used more in this book due to its more
+    intuitive use.
+*** Saying Hello to the User
+    This is a classic. We're going to greet the user.
+
+    Our =say-hello= function will ask for the user's name and then
+    respond by greating them.
+    
