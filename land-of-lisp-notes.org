@@ -1374,3 +1374,34 @@ with all of the code I copied during that work.
     Our =say-hello= function will ask for the user's name and then
     respond by greating them.
     
+    #+begin_src lisp :results output
+      (defun say-hello ()
+	(print "Please type Your name:")
+	(let ((name (read)))
+	  (print "Nice to meet You, ")
+	  (print name)))
+    #+end_src
+
+    #+RESULTS:
+
+    Now, because we are asking for user input, =org-babel= doesn't
+    actually complete the command for You (since it is waiting to read
+    Your input.
+
+    I was able to get this one working by interrupting the execution
+    (C-g) and switching to the =*slime-repl sbcl*= buffer to type my
+    name.
+
+    This may be a road block w/r/t using =org-babel= for literate
+    programming. I'll have to dive this futher in the future.
+    #+begin_src lisp :results output
+      (say-hello)
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : "Please type Your name:" 
+    : "Nice to meet You, " 
+    : CHRISTOPHER 
+
+    
