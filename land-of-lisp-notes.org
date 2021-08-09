@@ -1373,6 +1373,11 @@ with all of the code I copied during that work.
 
     Our =say-hello= function will ask for the user's name and then
     respond by greating them.
+
+    The =print= is executed first, and gives the user a prompt. Then,
+    we set up a local variable (=name=) and =read= into it. It waits
+    for a Return, and then sets the variable equal to what was
+    input. Finally, we use the variable to print a greeting.
     
     #+begin_src lisp :results output
       (defun say-hello ()
@@ -1404,4 +1409,32 @@ with all of the code I copied during that work.
     : "Nice to meet You, " 
     : CHRISTOPHER 
 
-    
+    The above did make me pause for a week or so. However, eventually
+    I reasoned out that input (that is, for the purposes of the above)
+    is going to be a rare instance in this book outside of actually
+    running the finished program. And /that/ I can do from the REPL.
+
+    So, we are good to continue.
+
+    However, we need to address something: Everything is currently
+    surrounded by ="=. This is fine for now, but eventually I would
+    like that not to be the case.
+
+    I'm advised that, when I have an IO task in Lisp, I should start
+    by asking myself if =print= or =read= can do the job. It will save
+    a lot of trouble if I can use these two instead of any others.
+
+    I'm also warned that =read= can be *dangerous* if used wrong. I'm
+    assuming we'll come to those details soon, though there are some
+    hyperlinks here I could follow.
+
+    The following example is given to show how =read= and =print= can
+    work almost identically when working with numbers as with strings.
+
+    #+begin_src lisp :results output
+      (defun add-five ()
+	(print "Enter a Number: ")
+	(let ((number (read)))
+	  (print "When I add 5 I get:")
+	  (print (+ number 5))))
+    #+end_src
