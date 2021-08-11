@@ -26,6 +26,7 @@ with all of the code I copied during that work.
      (print "This File Contains")
      (print "Two Lines of Lisp")
    #+end_src
+
 ** Chapter 2 - Creating Your First Lisp Program
    We're going to be developing a guess-my-number game.
 *** Defining Global Variables
@@ -33,6 +34,7 @@ with all of the code I copied during that work.
      (defparameter *small* 1)
      (defparameter *big* 100)
    #+end_src
+
    #+begin_src lisp :results output
      (print *small*)
      (print *big*)
@@ -66,6 +68,7 @@ with all of the code I copied during that work.
    #+begin_src lisp
      (guess-my-number)
    #+end_src
+
 *** Subfunctions
    This was the expected output.
 
@@ -353,6 +356,7 @@ with all of the code I copied during that work.
     #+begin_src lisp
       (list 'pork 'beef 'chicken)
     #+end_src
+
 *** Nested Lists
     Lists can contain other lists.
 
@@ -394,6 +398,7 @@ with all of the code I copied during that work.
       (print (cddar '((peas carrots tomatoes) (pork beef chicken) duck)))
       (print (cadadr '((peas carrots tomatoes) (pork beef chicken) duck)))
     #+end_src
+
 *** What we've Learned
     We discussed basic Lisp syntax, including the benefits of
     parentheses, lists, and cons/car/cdr.
@@ -556,6 +561,7 @@ with all of the code I copied during that work.
 		 (print "odd number"))
 	  'even-number)
     #+end_src
+
 *** Beyond if: when and unless
     There are a number of commands that include an /implicit
     progn/. We'll look at two here, =when= and =unless=.
@@ -924,6 +930,7 @@ with all of the code I copied during that work.
 			     (attic (You are in the attic. There is a giant
 			     welding torch in the corner.))))
     #+end_src
+
 *** Describing the Location
     The way to look up data in an /alist/ is the =assoc= function.
 
@@ -950,6 +957,7 @@ with all of the code I copied during that work.
     #+begin_src lisp :results value
       (describe-location 'living-room *nodes*)
     #+end_src
+
 *** Describing the Paths
     We're going to store the paths in a separate global variable
     (another /alist/).
@@ -1170,6 +1178,7 @@ with all of the code I copied during that work.
     #+begin_src lisp :results value
       (look)
     #+end_src
+
 *** Walking Around in Our World
     We're going to make another non-functional function to walk around
     using our global variables.
@@ -1241,9 +1250,6 @@ with all of the code I copied during that work.
 	      (t '(you cannot get that.))))
     #+end_src
 
-    #+RESULTS:
-    : PICKUP
-
     I'm honestly not a huge fan of this design, at least for now.. The
     global variables are not only a hotbed for unforeseen errors, but
     they seem as though they will only grow over time. Alists are only
@@ -1272,9 +1278,6 @@ with all of the code I copied during that work.
       (pickup 'whiskey)
     #+end_src
 
-    #+RESULTS:
-    : (YOU ARE NOW CARRYING THE WHISKEY)
-
     It worked!
 *** Checking our Inventory
     Checking our inventory is basically going to be a utility function
@@ -1285,17 +1288,11 @@ with all of the code I copied during that work.
 	(cons 'items- (objects-at 'body *objects* *object-locations*)))
     #+end_src
 
-    #+RESULTS:
-    : INVENTORY
-
     Let's try it out.
 
     #+begin_src lisp
       (inventory)
     #+end_src
-
-    #+RESULTS:
-    : (ITEMS- WHISKEY)
 
     This ends our exploration of a basic text adventure engine, for
     now. We will be adding a mechanism for actually manipulating
@@ -1333,14 +1330,6 @@ with all of the code I copied during that work.
 	     (print "a")
 	     (print "test"))
     #+end_src
-
-    #+RESULTS:
-    : 
-    : "foo" 
-    : "this" 
-    : "is" 
-    : "a" 
-    : "test"
     
     They mention that, if You run the =print= command in a REPL, the
     result is shown twice: Once for the return value of the =print=
@@ -1359,9 +1348,6 @@ with all of the code I copied during that work.
 	     (prin1 "test"))
       
     #+end_src
-
-    #+RESULTS:
-    : foo""this""is""a""test
 
 
     The =prin1= command is used a lot in more serious Lisp code,
@@ -1387,8 +1373,6 @@ with all of the code I copied during that work.
 	  (print name)))
     #+end_src
 
-    #+RESULTS:
-
     Now, because we are asking for user input, =org-babel= doesn't
     actually complete the command for You (since it is waiting to read
     Your input.
@@ -1399,15 +1383,6 @@ with all of the code I copied during that work.
 
     This may be a road block w/r/t using =org-babel= for literate
     programming. I'll have to dive this futher in the future.
-    #+begin_src lisp :results output
-      (say-hello)
-    #+end_src
-
-    #+RESULTS:
-    : 
-    : "Please type Your name:" 
-    : "Nice to meet You, " 
-    : CHRISTOPHER 
 
     The above did make me pause for a week or so. However, eventually
     I reasoned out that input (that is, for the purposes of the above)
@@ -1419,7 +1394,7 @@ with all of the code I copied during that work.
     However, we need to address something: Everything is currently
     surrounded by ="=. This is fine for now, but eventually I would
     like that not to be the case.
-
+*** Starting with print and read
     I'm advised that, when I have an IO task in Lisp, I should start
     by asking myself if =print= or =read= can do the job. It will save
     a lot of trouble if I can use these two instead of any others.
@@ -1438,3 +1413,569 @@ with all of the code I copied during that work.
 	  (print "When I add 5 I get:")
 	  (print (+ number 5))))
     #+end_src
+
+    Here are some examples of printing various types of values.
+
+    Note that the types of output are:
+    - An Integer
+    - A Float
+    - A Symbol (all caps due to case-blindness)
+    - A String
+    - A character
+
+    Also note the quoting. We could omit the quoting in each case
+    aside from the symbol (since it could refer to a function or
+    value).
+    
+    #+begin_src lisp :results output
+      (print '3)
+      (print '3.4)
+      (print 'foo)
+      (print '"foo")
+      (print '#\a)
+    #+end_src
+
+    But there are of course a few special cases here. First, with
+    symbols, You can create case sensitive symbols using the =|=
+    character, =|LikeThis|=. Piped symbols can even have punctuation
+    in them: =|So, this is a VERY valid symbol, too!|= is a good
+    example.
+
+    And finally, we can print single characters using the =#\=
+    prefix. There are three common non-visible characters mentioned in
+    the book: =#\newline=, =#\tab= and =#\space=. They are pretty
+    self-explanatory.
+
+    As for =read=, it behaves exactly the same way, except instead of
+    printing them, it reads them.
+*** Reading and Printing Stuff the Way Humans Like It
+    The =say-hello= function defined above is pretty bad at what it
+    actually is supposed to do.
+
+    We're shown the following table:
+
+    | For       | Printing | Reading |
+    |-----------+----------+---------|
+    | Computers | =print=  | =read=  |
+    | Humans    | =princ=  | =???=   |
+
+    Remember our problem from earlier: All strings were double-quoted,
+    and it looked very stilted when used. The =princ= function behaves
+    as humans might expect, as opposed to the more "correct" way a
+    computer might prefer it to. Strings are unquoted. Characters are
+    unprefixed.
+
+    #+begin_src lisp :results output
+      (print '3)
+      (princ '3)
+      (print '3.4)
+      (princ '3.4)
+      (print 'foo)
+      (princ 'foo)
+      (print '"foo")
+      (princ '"foo")
+      (print '#\a)
+      (princ '#\a)
+      (progn (princ #\newline)
+	     (princ "This Sentence will be interrupted")
+	     (princ #\newline)
+	     (princ "by an annoying newline character."))
+    #+end_src
+
+    The thing to note here is that while =print= prints anything in a
+    way unique to its internal representation (and therefore, it can
+    be =read= back /into/ that internal representation easily),
+    =princ= is a one-way street: It cannot easily be stored again, and
+    breaks the symmetry this Part is focusing on.
+
+    The obvious course of action is to come up with arbitrary rules
+    for how the computer should interpret input. One (fairly naive,
+    but still useful) approach would be: "Let the user type whatever
+    they want until they hit enter, then treat everything they typed
+    as a string." The function that does this is called =read-line=,
+    and we can use it to complete our refinement of the =say-hello=
+    function.
+
+    The below =say-hello= implementation allows the user to enter
+    /any/ name, including whitespace and punctuation, up to a
+    newline. It also doesn't print needless quotes around everything,
+    nor does it isolate the name on a line by itself.
+
+    #+begin_src lisp
+      (defun say-hello()
+	(princ "Please type Your name: ")
+	(let ((name (read-line)))
+	  (princ "Nice to meet You, ")
+	  (princ name)
+	  (princ '#\newline)))
+    #+end_src
+*** The Symmetry Between Code and Data in Lisp
+    Lisp can also treat program code and data interchangeablly. A
+    language that uses the same data structures to store both data and
+    program code is said to be /Homoiconic/.
+
+    We discussed these two modes briefly in Chapter 3. Here's that
+    example again.
+
+    #+begin_src lisp :results output
+      (princ '(+ 1 2))  ; data mode
+      (princ #\newline) ; \n
+      (princ (+ 1 2))   ; code mode
+    #+end_src
+
+    In Chapter 5, we used a /quasiquote/ when defining the
+    =describe-path= function. This was another example.
+
+    But these features are fairly limited in their abilities. If we
+    want to execute arbitrarily generated/collected code (as in a
+    parser), we need another function. This function is =eval=.
+
+    #+begin_src lisp
+      (defparameter *foo* '(+ 1 2))
+      (eval *foo*)
+    #+end_src
+
+    The =eval= command is powerful and simple, but easy to cause
+    problems with, like a vorpal sword or midas ring. Improper use can
+    easily pose a security risk. Experienced Lispers will only rarely
+    use =eval=; many of the things inexperienced Lispers might use
+    =eval= for can be done with Macros instead, which we'll discuss
+    further in Chapter 16.
+
+    The bottom line is that *Quoting, Quasiquoting, =eval=, and Macros
+    allow You to take advantage of Lisp's Homoiconicity in Your code.*
+*** Adding a Custom Interface to Our Game Engine
+    Thus far, we've been using the Lisp REPL to enter our game
+    commands. It's amazing how well this works for prototyping our
+    game.
+
+    Now we are going to make our own interface.
+**** Setting up a custom REPL
+     Defining a REPL in Lisp is very easy. This will work exactly as
+     the standard REPL:
+
+     #+begin_src lisp
+       (defun game-repl ()
+	 (loop (print (eval (read)))))
+     #+end_src
+
+     That's not the most useful REPL, though. Let's try harder.
+
+     In this version, we capture the player input using =game-read=
+     into a variable called =cmd=. This lets us handle quit. So long
+     as the user did not type "quit", it evals and prints using
+     =game-eval= and =game-print= the command in =cmd=. Finally, it
+     recurses.
+     
+     #+begin_src lisp
+       (defun game-repl ()
+	 (let ((cmd (game-read)))
+	   (unless (eq (car cmd) 'quit)
+	     (game-print (game-eval cmd))
+	     (game-repl))))
+     #+end_src
+**** game-read
+     We'll need to define our "game-" prefixed functions. Let's start
+     with =game-read=.
+
+     Our =game-read= function starts by using =read-from-string=,
+     which is similar to =read= but works from a string instead of
+     input, to assign the typed commands to the variable =cmd= as a
+     list (so "walk east" becomes "(walk east)" and is assigned to
+     =cmd=). Then, we define a simple local function with =flet= (not
+     =labels=, since we aren't recursing or anything) that will quote
+     all parameters in our new list. It does this by =cons= -ing the
+     =car= of =cmd= with a =mapcar= of the =cdr= of =cmd= using
+     =quote-it=, our local function.
+     
+     #+begin_src lisp
+       (defun game-read ()
+	 (let ((cmd (read-from-string
+		     (concatenate 'string "(" (read-line) ")"))))
+	   (flet ((quote-it (x)
+		    (list 'quote x)))
+	     (cons (car cmd) (mapcar #'quote-it (cdr cmd))))))
+     #+end_src
+
+     That is a lot of functions, but I understood them all!
+
+     And upon testing, it indeed works.
+
+     It should probably have exception handling, because it is
+     accepting input from the user (Mismatched parens is the situation
+     referenced in the book). We'll go over that in Chapter 13.
+**** game-eval
+     Now, we need to define how we're going to actually /run/ the
+     input.
+
+     Our main goal here is limiting the functions that the user can
+     call with their input. We'll do this by use of a global variable
+     =*allowed-commands*=.
+
+     Before reading the explanation, I want to take a crack at
+     explaining how this works.
+
+     Basically, it takes an S-Expression in the form of a list. It
+     checks the =car= of that list to see if it is an Allowed Command
+     (that is, if it is a member of the =*allowed-commands*=
+     global). If it is, it runs =eval= on it. Otherwise, it tells the
+     user it does not know the command supplied.
+     
+     #+begin_src lisp
+       (defparameter *allowed-commands* '(look walk pickup inventory))
+       (defun game-eval (sexp)
+	 (if (member (car sexp) *allowed-commands*)
+	     (eval sexp)
+	     '(i do not know that command.)))
+     #+end_src
+
+     I got the explanation correct!
+     
+     This is fairly basic protection. There is more to learn in the
+     section called "The Dangers of read and eval".
+**** game-print
+     Finally, we need a way to print things in a normal,
+     human-readable way. The most obvious thing we can do to work
+     towards this goal is to print the correct case of each letter
+     (uppercase the start of sentances, lowercase everything else).
+
+     The =game-print= function should take a list of symbols, and
+     print a properly-formatted string. The same technique used here
+     can be used to generate any kind of text, such as HTML Code
+     (we'll be doing something similar in Chapter 17).
+
+     These functions are kind of intimidating. Here we go.
+
+     I am not confident enough to parse this on my own, I don't
+     think. But I'll try.
+
+     So, first, =tweak-text=. Takes three arguments, =lst=, =caps=,
+     and =lit=. So long as =list= is not =nil=, it assigns the =car=
+     of =lst= to =item=, and stores the rest of =lst= in =rest=.
+
+     We then enter a =cond= which always ends with us recursing, using
+     =rest= as the new =lst= (in other words, popping off =item=).
+
+     The =cond= has a number of branches; I'm not sure what most of
+     them do.
+
+     The first takes a " " input and =cons= es it with the
+     rest of the text.
+
+     The second checks to see if the text is punctuation, and if so,
+     =cons= es it with the rest, but passing =t= to the variable
+     =caps= (which would otherwise be =nil=).
+
+     If the text is a double-quote, it does /not/ =cons= it to the
+     list and recurses, flipping =lit=, whatever that variable means
+     (literal?).
+
+     The next branch checks =lit=. If it is not =nil=, it conses
+     whatever the current item is to the list and then recurses,
+     turning =caps= nil.
+
+     It then checks both =caps= and =lit=. If either are true, it
+     conses the item after upcasing it, recursing with =caps= as nil.
+
+     Finally, the default case =t= will always run if nothing else
+     does. It will conse the /downcased/ item with the list, and
+     recurse passing =nil= to both =caps= and =lit=.
+
+     Logically, I don't see a case where =lit= can be true for the
+     =or= condition, so I don't know why that's included.
+
+     As this is a recursive function, it will continue to recurse
+     until there is only an empty list left (which is the same as
+     =nil=).
+
+     Now, =game-print=. Takes a list.
+
+     I don't know what =coerce= does. Sounds ominous. Looking it up in
+     the Hyperspec, it seems to create a new symbol of a specific type
+     from some other symbol.
+
+     Using that definition:
+
+     We start by printing the list out as a string. We then cut off
+     the leading and following "(", ")", and " " that might be
+     present, giving us just the string itself.
+
+     We then turn /that/ string into a list. Which is odd, since it
+     may have started as a list? Maybe this is for safety.
+
+     We feed this list to =tweak-text= as =lst=, with =t= for =caps=
+     and =nil= for =lit=. So, =caps= starts as =t=.
+
+     After that, we =coerce= the resulting list into a string, and
+     =princ= that for the user.
+
+     Finally, we call =fresh-line=, which is one of the functions that
+     will output a '\n'.
+
+     #+begin_src lisp
+       (defun tweak-text (lst caps lit)
+	 (when lst
+	   (let ((item (car lst))
+		 (rest (cdr lst)))
+	     (cond ((eq item #\space) (cons item (tweak-text rest caps lit)))
+		   ((member item '(#\! #\? #\.)) (cons item (tweak-text rest t lit)))
+		   ((eq item #\") (tweak-text rest caps (not lit)))
+		   (lit (cons item (tweak-text rest nil lit)))
+		   ((or caps lit) (cons (char-upcase item) (tweak-text rest nil lit)))
+		   (t (cons (char-downcase item) (tweak-text rest nil nil)))))))
+       
+       (defun game-print (lst)
+	 (princ (coerce (tweak-text (coerce (string-trim "() "
+							 (prin1-to-string lst))
+					    'list)
+				    t
+				    nil)
+			'string))
+	 (fresh-line))
+     #+end_src
+
+     Okay, there were a few things I got somewhat wrong, but that's
+     because I'm new.
+
+     First, the =lit= flag is so we can /escape/ parts of a string
+     with quotes! This lets us use things that Lisp might not like,
+     like non-standard caps or commas.
+
+     Next, the list -> string -> list is so we can using =string-trim=
+     on the sentence before processing it.
+
+     Finally, we are working /character-by-character/ here. I did not
+     realize the delimiter was only a single character; I wonder how
+     we got that way. Maybe this is another benefit of =coerce=?
+*** Try Out Our Fancy New Game Interface
+    Let's try it out. Make sure to run the subtrees for both Chapter 5
+    and Chapter 6, then switch to the connected SLIME buffer.
+
+    It's difficult to say how happy it made me to walk around in that
+    little world I built.
+
+    And even better, I understood so much of the tools I used to do
+    so.
+
+    We'll expand this game out again in Chapter 17. But for now, it
+    may be time to move on to something else for a while.
+*** The Dangers of read and eval
+    Avoid these two commands. You can never be sure that a Lisp
+    program using =eval= or =read= is completely safe from a malicious
+    hacker. One method of attack we did not even touch on here is
+    /reader macros/, which will work and let the user execute
+    arbitrary code in our Lisp REPL.
+
+    Just avoid them if You can.
+*** What I've Learned
+    Created a Custom Text Adventure REPL to use with our engine.
+
+    =print= and =read= let You directly communicate with the user.
+
+    Other IO functions are not as elegant, but are friendlier for
+    humans.
+
+    /Homoiconic/ programming languages store program code and data in
+    a similar format. In Lisp, the main features that provide
+    /Homoiconicity/ are /Quoting/, /Quasiquoting/, =eval=, and
+    /Macros/.
+
+    It's easy to write Your own REPL.
+
+    It's simple to transform Your internal Lisp data into new
+    forms. This makes it easy to encapsulate presentation from the
+    details of the data.
+** Chapter 6.5 - Lambda: A Function So Important It Deserves Its Own Chapter
+   The =lambda= function is the most important function in Lisp.
+
+   It lets You create functions without giving them a name. This is
+   possible since functions are /first class values/ in Lisp, and can
+   be passed around the same way values can.
+** Chapter 7 - Going Beyond Basic Lists
+   In this chapter, we're going to expand our knowledge of Lists and
+   List Manipulation passed the basics.
+*** Exotic Lists
+    Lists are built using /cons cells/, which are small data
+    structures that allow You to link together two pieces of data. The
+    right slot of the last item in the chain should contain =nil=.
+
+    Here is how to use cons cells to make a list of the numbers 1, 2,
+    and 3.
+
+    Note how the =cons= cells are absent from the printed list. This
+    is a convenience feature for humans, they are still there.
+    
+    #+begin_src lisp
+      (cons 1 (cons 2 (cons 3 nil)))
+    #+end_src
+    
+**** Dotted Lists
+    Suppose when we build a list we don't use a consistent string of
+    =cons= cells. What happens then?
+
+    This is a /dotted list/, which is a list that does not end with
+    the expected =nil=, but instead ends with some other value.
+    
+    #+begin_src lisp
+      (cons 1 (cons 2 3))
+    #+end_src
+
+    /Dotted Lists/ aren't useful in and of themselves, and shouldn't
+    be used to store data in a normal program. However, they may
+    appear emergently in code, as a side effect of using =cons= cells
+    directly.
+
+    The dot notation used in /dotted lists/ is actually an alternative
+    syntax for =cons=, but only in /data mode/. We could make lists
+    like this if we wanted:
+
+    #+begin_src lisp
+      `(1 . (2 . (3 . nil)))
+    #+end_src
+    
+**** Pairs
+     A common use for /dotted lists/ in Lisp is /pairs/. This is
+     convenient (because You can now use =car= and =cdr= to interact
+     with the pair members) and efficient (only one =cons= cell is
+     needed to store the pair). I have heard the term /dotted pair/
+     before, but it isn't used in this book, at least yet. It /is/
+     mentioned, however, that You can use these for storing x/y
+     coordinates or a key/value pair. Here's a pair of numbers:
+
+     #+begin_src lisp
+       (cons 2 3)
+     #+end_src
+
+     We'll revisit pairs when we discuss /Association Lists/ again.
+**** Circular Lists
+     What if, instead of =nil=, the last cell in a list pointed to the
+     first cell?
+
+     This creates a /Circular List/. It's important to set
+     =*print-circle*= to =t= before using a circular list, or You may
+     get stuck in an infinite loop during printing.
+
+     We can easily make a circular list using =setf=. The ability to
+     do things like this will be explored more in Chapter 9. For now,
+     here is a circular list of 1, 2, 3, 1, 2, 3 repeating forever.
+     
+     #+begin_src lisp
+       (setf *print-circle* t)
+       (defparameter foo '(1 2 3))
+       (setf (cdddr foo) foo)
+     #+end_src
+
+     This notation denotes /self-referential/ values, and is a clever
+     but esoteric way to print an infinite loop to screen. However,
+     the more complex the notation, the harder it is to grok, so try
+     to keep these to a minimum.
+**** Association Lists
+     There is a particularly useful data structure called an
+     /association list/, where key-value pairs are stored in a single
+     list. These can be built out of =cons= cells in a simple way:
+     Note the use of /dotted pairs/.
+
+     #+begin_src lisp
+       (defparameter *drink-order* '((bill . double-espresso)
+				     (lisa . small-drip-coffee)
+				     (john . medium-latte)))
+     #+end_src
+
+     This is so common in Lisp that the function =assoc= is named for
+     it. Use it to look up information: Alone, it gives the pair. With
+     =car=, the key. With =cdr=, the value. It searches the whole
+     list, from the beginning, for the first match.
+
+     #+begin_src lisp
+       (cdr (assoc 'lisa *drink-order*))
+     #+end_src
+
+     The fact that it goes for the first match means that, to update a
+     value, it is common to simply push a new value with an identical
+     key onto the list. This is beneficial because it gives the full
+     histogram of the variable's state over time, and is therefore
+     more immutable than simply updating the value would be. The
+     drawback is that, as list sizes grow, /alists/ are impractical
+     and slow: The more pairs You have, the more items of the list
+     need to be processed on each lookup, and the longer it will take
+     to do so. The book recommends keeping /alists/ under 12 keys, and
+     using them for prototyping (and replacing them once a program
+     matures).
+
+     #+begin_src lisp
+       (push '(lisa . large-mocha-with-whipped-cream) *drink-order*)
+     #+end_src
+
+     #+begin_src lisp
+       (cdr (assoc 'lisa *drink-order*))
+     #+end_src
+
+     We'll discuss in Chapter 9 the perfomance limitations of
+     list-based data structures.
+*** Coping with Complicated Data
+    =Cons= cells are great for list-like data structures, and are many
+    Lispers go-to when performance isn't the main constraint. If
+    compiling Your program, structures made of =cons= cells may still
+    be a good choice: *Lisp compilers can often reduce a change to a
+    cons cell to a single assembly instruction.*
+**** Visualizing Tree-Like Data
+     *As discussed in Chapter 3, the data and code of a Lisp program
+     is represented with syntax expressions.* These are nested lists
+     with hierarchical symbols in their =car=.
+
+     Here is how we might use them to represent a house.
+
+     #+begin_src lisp
+       (defparameter *house* '((walls
+				(mortar
+				 (cement)
+				 (water)
+				 (sand))
+				(bricks))
+			       (windows
+				(glass)
+				(frame)
+				(curtains))
+			       (roof
+				(shingles)
+				(chimney))))
+     #+end_src
+
+     The fact that it is made up of nested lists makes it easy to
+     visualize the hierarchy, here: Walls are made of bricks and
+     mortar, which is made up of cement, water, and sand.
+
+     Tree-Like data can naturally be expressed this way. XML is a
+     reinvention of this concept, from a Lisp perspective.
+
+     However, non-Tree-Like data is harder to visualize. The example
+     specifically given is a Mathematical Graph.
+**** Visualizing Graphs
+     In mathematics, a graph is nodes connected by edges. Each item
+     may have more data involved, too.
+
+     We used something similar to this in Chapter 5: The wizard's
+     house was a /directed graph/. We chose to store it in two
+     /alists/: one for the nodes, and one for the edges. I believe I
+     commented on how this was unmaintainable and sloppy code, which
+     is nice to hear that the book agrees. Here they are again,
+     renamed to new, unique variables. We're going to use a tool to
+     make visualizing this data easier next.
+
+     #+begin_src lisp
+       (defparameter *wizard-nodes* '((living-room (you are in the
+				      living-room. a wizard is snoring loudly
+				      on the couch.))
+				      (garden (you are in a beautiful
+				      garden. there is a well in front of
+				      you.))
+				      (attic (you are in the attic. there is
+				      a giant welding torch in the
+				      corner.))))
+       (defparameter *wizard-edges* '((living-room (garden west door)
+				       (attic upstairs ladder))
+				       (garden (living-room east door))
+				      (attic (living-room downstairs
+				      ladder))))
+     #+end_src
+*** Creating a Graph
