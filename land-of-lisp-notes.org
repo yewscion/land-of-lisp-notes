@@ -1,4 +1,18 @@
+#+options: ':nil *:t -:t ::t <:t H:3 \n:nil ^:t arch:headline
+#+options: author:t broken-links:nil c:nil creator:nil
+#+options: d:(not "LOGBOOK") date:t e:t email:nil f:t inline:t num:t
+#+options: p:nil pri:nil prop:nil stat:t tags:t tasks:t tex:t
+#+options: timestamp:t title:t toc:t todo:t |:t
+#+title: land-of-lisp-notes
+#+date: <2021-08-12 Thu>
+#+author: rodnchr
+#+email: rodnchr@ua6ff97dd3b1950.ant.amazon.com
+#+language: en
+#+select_tags: export
+#+exclude_tags: noexport
+#+creator: Emacs 28.0.50 (Org mode 9.4.6)
 #+PROPERTY: header-args :results replace verbatim value
+#+PROPERTY: header-args dot :cmd neato
 These are my notes while working through the LoL book, interpersed
 with all of the code I copied during that work.
 
@@ -1978,4 +1992,463 @@ with all of the code I copied during that work.
 				      (attic (living-room downstairs
 				      ladder))))
      #+end_src
+
 *** Creating a Graph
+    We are going to be using =graphviz= [[https://graphviz.org/][Link]] to make graphs from our
+    data. I'm warned that =clisp= is the implementation used in this
+    book, and therefore I may need to alter the commands used for
+    =sbcl=.
+**** Testing Graphviz
+    The =graphviz= program is one I toyed around with in the past, but
+    I'm glad that we are using it here. I always wanted to use it to
+    help in planning my software, and I am happy to find that we're
+    doing that in Lisp. Yet another things that points me towards this
+    wonderful language.
+
+    Below is a /digraph/, or a /directed graph/, that points from a to
+    b to c. We're using the =neato= command from graphviz to turn the
+    below markup into a visual graph. The =neato= command is described
+    as, "the default tool to use if the graph is not too large (about
+    100 nodes) and you don’t know anything else about it" on the
+    =graphviz= website.
+
+    #+begin_src dot :file ./imgs/example-of-dot.png
+      digraph {
+	      a->b->c;
+      }
+    #+end_src
+
+  
+    I also note that, due to =org-babel=, my workflow is greatly
+    simplified: It will compile the code into a named image in the
+    repo and then embed it in the file itself, so long as I have
+    =(org-toggle-inline-images)= set to true.
+**** Creating Graphs with Lisp
+     Now we are going to create graphs with and from Lisp.
+
+     We will need to:
+
+     1. Convert the identifiers of all /nodes/ to dot format.
+     2. Convert the /edges/ connecting these /nodes/.
+     3. Generate the labels for every /node/ and /edge/.
+***** Converting Node Identifiers
+      First we need to convert the node identifers into dot
+      identifiers. We'll write a function called =dot-name= for this.
+
+      Looking at this before reading the explanation: We are taking an
+      expression, substituting all non-alphanumerics characters with
+      =#\_=, which I believe is a literal underscore, and then =prin1=
+      ing that as a return. On second glance, I think I have the order
+      reversed there: We are calling =prin1-to-string= first, to
+      convert the symbol into a string, and then subbing out
+      non-alphanumeric characters before returning.
+
+      This was correct!
+
+      For the reasoning behind it: DOT format identifiers can only
+      contain letters, numbers, and underscores. This is a naive way
+      to ensure that the names are created safely. It's brought up
+      that this will assume that no nodes will differ only by
+      non-alphanumberic characters (e.g. =foo!= and =foo?= would both
+      be =foo_= here, causing a collision).
+
+      We are using a few new functions here, =substitute-if=,
+      =complement=, and =alphanumericp=.
+
+      The =substitute-if= function substitues values based on the
+      result of a test (or /predicate/) function (it also works on
+      lists!). The =alphanumericp= function is one such /predicate/
+      function (note the -p suffix) that tests for whether a value is
+      alphanumeric. However, we want to replace all values that are
+      /not/ alphanumeric, which is where the =complement= function
+      comes in: it takes a function and returns its opposite (probably
+      limited to /predicate/ functions, then).
+
+      NOTE: There is also a =substitute-if-not= function, but all
+      =-not= functions are considered deprecated, and should not be
+      used.
+      
+      #+begin_src lisp
+	(defun dot-name (exp)
+	  (substitute-if
+	   #\_
+	   (complement #'alphanumericp)
+	   (prin1-to-string exp)))
+      #+end_src
+
+      Here are some examples of how the =dot-name= function works.
+      
+      #+begin_src lisp :results output verbatim
+	(print (dot-name 'living-room))
+	(print (dot-name 'foo!))
+	(print (dot-name 24))
+      #+end_src
+***** Adding Labels to Graph Nodes
+      We'll now focus on convering the labels for the nodes.
+
+      The label will consist of two parts:
+
+      1. The name of the /node/.
+      2. The data linked to the /node/ from the =*node*= /alist/.
+
+
+      The main issue here is avoiding label overflow (too much text in
+      the label).
+
+      We're going to use a global variable =*max-label-length*= to
+      ensure that the text doesn't get too long. If the text /is/ too
+      long, we'll display 27 characters of it with a "..."
+      suffix. And, if there is no input, we'll return "".
+
+      We're also using a new function, =write-to-string=. It is very
+      similar to =prin1-to-string=. The main difference seems to be
+      the /keyword parameters/ that =write-to-string= supports.
+
+      /Keyword parameters/ are flags supported by certain Lisp
+      functions to let You choose specific parameters to pass in
+      (instead of setting them all every time). =:pretty nil= means to
+      /not/ clean up the string before writing it. Without that
+      /keyword parameter/, =write-to-string= would do things like
+      placing new-lines in the string, or indentation.
+
+      #+begin_src lisp
+	(defparameter *max-label-length* 30)
+	
+	(defun dot-label (exp)
+	  (if exp
+	      (let ((s (write-to-string exp :pretty nil)))
+		(if (> (length s) *max-label-length*)
+		    (concatenate 'string (subseq s 0 (- *max-label-length* 3)) "...")
+		    s))
+	      ""))
+      #+end_src
+***** Generating DOT Information for the Nodes
+      Now that we have both identifiers and labels for nodes handled,
+      let's compose them into a single function that works with our
+      data as it already is.
+
+      Our function will take our /alist/ of nodes, and output the DOT
+      information to encode them.
+
+      It uses =mapc= to go through every node in =nodes= and =princ=
+      prints the dot format to the screen. The main difference between
+      =mapcar= and =mapc= is that =mapc= does /not/ return the
+      transformed list.
+
+      We're using the console as an intermediary here, which is a
+      common paradigm in Lisp. It lets You easily debug issues in the
+      code, as You can see the output on the screen in the REPL (or in
+      org-babel).
+
+      
+      #+begin_src lisp
+	(defun nodes->dot (nodes)
+	  (mapc (lambda (node)
+		  (fresh-line)
+		  (princ (dot-name (car node)))
+		  (princ "[label=\"")
+		  (princ (dot-label node))
+		  (princ "\"];"))
+		nodes))
+      #+end_src
+
+
+      We can use this function on our =*wizard-nodes*= /alist/, as a
+      test.
+
+      Note how we are not interested in the return value of the
+      function, here, but only its output. *Lispers would say we are
+      only interested in the /side effects/ of this function.*
+      
+
+      #+begin_src lisp :results output verbatim
+	(nodes->dot *wizard-nodes*)
+      #+end_src
+
+      It works!
+***** Converting Edges into DOT Format
+      This will be strikingly similar to the former function
+      =node->dot=, but for the =edges= data.
+
+      #+begin_src lisp
+	(defun edges->dot (edges)
+	  (mapc (lambda (node)
+		  (mapc (lambda (edge)
+			  (fresh-line)
+			  (princ (dot-name (car node)))
+			  (princ "->")
+			  (princ (dot-name (car edge)))
+			  (princ "[label=\"")
+			  (princ (dot-label (cdr edge)))
+			  (princ "\"];"))
+			(cdr node)))
+		edges))
+      #+end_src
+
+      And here's an example:
+
+      #+begin_src lisp :results output verbatim
+	(edges->dot *wizard-edges*)
+      #+end_src
+
+      It's already easier to visualize the data, but let's continue.
+***** Tying it all together
+      The last step is composing the above functions into a single
+      function that will output the DOT info for the entire structure.
+
+      #+begin_src lisp
+	(defun graph->dot (nodes edges)
+	  (princ "digraph{")
+	  (nodes->dot nodes)
+	  (edges->dot edges)
+	  (princ "}"))
+      #+end_src
+
+      Note how only the most top-level markup is saved for the above
+      function. All else is within one of the other functions, which
+      are purely functional (aside from outputting their data to the
+      screen, I suppose).
+
+      Let's use it on our /alists/!
+
+      #+name: wizard-dot-info
+      #+begin_src lisp :results output verbatim
+	(graph->dot *wizard-nodes* *wizard-edges*)
+      #+end_src
+
+      Woo! This is *amazing*, as my focus is text manipulation. That
+      was understandable and easy.
+**** Turning the DOT Info Into a Picture
+***** Org Babel Aside
+      This is an aside, not part of the book.
+
+      My main workflow in Common Lisp will be Emacs and SLIME, using
+      Org-Babel as the main way I execute code. I want to test how
+      this will work for me before using the example in the book to
+      learn about system calls and stuff.
+
+      We can use the =:var= header for this.
+
+      #+begin_src dot :var input=wizard-dot-info :file ./imgs/wizard-info.png 
+	$input
+      #+end_src
+***** Using Lisp
+      Now we will do it the way the book wants, by saving the output
+      to a file and then running the command on that file.
+
+      This is where the differences between [[https://clisp.sourceforge.io/][CLISP]] and [[http://www.sbcl.org/][SBCL]] began. I
+      worked around them by looking online; a [[https://www.reddit.com/r/learnlisp/comments/9dxa80/package_ext_doesnt_exist_w_extshell/][Reddit thread]] pointed me
+      to a [[https://kofno.github.io/2012/11/20/land-of-lisp-sbcl.html][website]] which pointed to a [[https://github.com/kofno/land-of-lisp][repo]] that had a [[https://github.com/kofno/land-of-lisp/blob/master/chapter-7/graph-util.lisp][file]] with the
+      answer.
+
+      The main difference here was the call to =ext:shell=, which had
+      to be replaced as it was CLISP-specific. SBCL has a few options
+      for this, but as IO is not needed apart from running the
+      command, the repo used =sb-ext:run-program=. I think that that
+      is a good choice.
+      
+      #+begin_src lisp
+	(defun dot->png (fname thunk)
+	  (with-open-file (*standard-output*
+			   fname
+			   :direction :output
+			   :if-exists :supersede)
+	    (funcall thunk))
+	  (sb-ext:run-program "dot" `("-Tpng" "-O" ,fname) :search T)))
+	
+      #+end_src
+
+      This is also our introduction to something called /thunks/.
+***** Using Thunks
+      A /thunk/ or /suspension/ is a /nullary function/ (small
+      function with zero arguments) that holds a computations we don't
+      want to run until later.
+
+      In =dot->png=, we use the function which will generate our DOT
+      info as a /thunk/ that will be run when we are ready.
+
+      This is a common technique in non-functional Lisp: Print stuff
+      to the console, wrap it in a /thunk/, and then redirect the
+      output from the console to where it needs to be. However, as
+      we'll discuss in Chapter 14, this is eschewed by Functional
+      Lispers due to it relying on side effects.
+***** Writing to a file
+      We're using the =with-open-file= function to write data to a
+      file.
+
+      The first item passed to =with-open-file= will become the name
+      of a /stream/, which is a special datatype in Common Lisp. The
+      second is a string, which will be the filename. The others are
+      all keyword parameters: We are specifying that it is an output
+      stream, and that we don't care if there is already a file,
+      overwrite it with only the data specified.
+
+      #+begin_src lisp
+	(with-open-file (my-stream
+			 "text/testfile.txt"
+			 :direction :output
+			 :if-exists :supersede)
+	  (princ "Hello File!" my-stream))
+      #+end_src
+
+      And we can see that it worked.
+      
+      #+begin_src bash :results output verbatim
+	cat text/testfile.txt
+      #+end_src
+***** Creating a Stream
+      All printing functions can accept a stream as an optional
+      parameter. If supplied, the functions print to the stream
+      instead of the console.
+
+     The scope of the streams created by =with-open-file= is the block
+     within =with-open-file=, much like the variables defined with
+     =let=.
+
+     We'll be looking at streams more closely in Chapter 12.
+***** Understanding Keyword Parameters
+      The name of a /keyword parameter/ is always a symbol beginning
+      with a colon. This is because they are /keyword symbols/, which
+      are symbols which always refer to themselves. In other words,
+      they are immutable and self-referential.
+
+      They make a funny reference to a cigar being just a cigar, which
+      I appreciated.
+***** Capturing the Console Output
+      In =dot->png= we send data to the file using
+      =*standard-output*=, which is a dynamic variable referring to
+      stdout.
+
+      Basically, if anything prints to stdout in the thunk, that
+      output is redirected to the file we've opened. It does this by
+      overriding the global variable =*standard-output*=, which
+      directs output to stdout, to the stream we define /under the
+      same name/.
+
+      This is not unlike using =let= to redefine a global variable in
+      a smaller scope. We're just doing it with output targets. And
+      because we are redefining the target for standard output, /all/
+      output is routed to the file by default, with no other changes.
+**** Creating a Picture of Our Graph
+     We need to finally compose everything into one neat function.
+
+     Our function will take a filename, an /alist/ of nodes, and an
+     /alist/ of edges, write the DOT info to a file of that filename,
+     and then run =neato= on that file to create the image.
+
+     #+begin_src lisp
+       (defun graph->png (fname nodes edges)
+	 (dot->png fname
+		   (lambda ()
+		     (graph->dot nodes edges))))
+     #+end_src
+
+     
+     Calling the =graph-dot= function as a lambda in the thunk is an
+     example of /delayed computation/. Such a thing allows us to call
+     a function after a stream has been opened, for instance. It
+     allows us to ensure everything is set up before we move forward.
+
+     Let's create our file!
+
+     #+begin_src lisp
+       (graph->png "imgs/wizard.dot" *wizard-nodes* *wizard-edges*)
+     #+end_src
+
+     To see it, I've referenced where the image (wizard.dot.png)
+     should have been created here.
+
+     [[./imgs/wizard.dot.png]]
+     
+
+     It worked!
+
+     It's mentioned that this can be very valuable for debugging, but
+     it also will be good for data modeling as well as other aspects
+     of my programming life.
+*** Creating Undirected Graphs
+    A graph with arrows on its edges is called a /directed graph/.
+
+    It is useful for visualizing flow and responsibility.
+
+    However, sometimes we need to travel between edges in a
+    disorganized way, for instance when back and forth motion is
+    common. This is when /undirected graphs/ are better, as they are
+    less busy and easier to understand.
+
+    We're going to add undirected versions of each of the above
+    functions.
+
+    While these are very similar to the directed functions, there are
+    a few key differences:
+
+    1. We only need to establish an edge between two nodes once. So,
+       we are using =maplist= (a function like =mapcar=, except it
+       acts on the entirety of the list instead of just the =car= of
+       the list before popping off the first element and repeating) to
+       check if the edge's destination appears later in the list. If
+       so, it skips the first connection, and just writes the last
+       one. It checks this using =(assoc (car edge) (cdr lst))=.
+
+    2. In =ugraph->dot=, we use "graph" instead of "digraph", as this
+       is not a directional graph. Otherwise it is identical to
+       =graph->dot=.
+
+    3. Because we designed =dot->png= to accept different functions as
+       the /thunk/, we don't need to rewrite it for this change. So,
+       we'll just make a new wrapper function that automatically plugs
+       our new function in as the /thunk/.
+    
+    #+begin_src lisp
+      (defun uedges->dot (edges)
+	(maplist (lambda (lst)
+		   (mapc (lambda (edge)
+			   (unless (assoc (car edge) (cdr lst))
+			     (fresh-line)
+			     (princ (dot-name (caar lst)))
+			     (princ "--")
+			     (princ (dot-name (car edge)))
+			     (princ "[label=\"")
+			     (princ (dot-label (cdr edge)))
+			     (princ "\"];")))
+			 (cdar lst)))
+		 edges))
+      (defun ugraph->dot (nodes edges)
+	(princ "graph{")
+	(nodes->dot nodes)
+	(uedges->dot edges)
+	(princ "}"))
+      (defun ugraph->png (fname nodes edges)
+	(dot->png fname
+		  (lambda ()
+		    (ugraph->dot nodes edges))))
+    #+end_src
+
+    Finally, let's use it to generate our undirected graph!
+
+    #+begin_src lisp
+      (ugraph->png "./imgs/uwizard.dot" *wizard-nodes* *wizard-edges*)
+    #+end_src
+
+    [[./imgs/uwizard.dot.png]]
+*** What I've Learned
+
+    We've discussed odd lists and created a drawing library for
+    mathematical graphs.
+
+    - Lists can end in other things than =nil= (dotted lists).
+    - Pairs are what You get when You cons two non-lists (dotted
+      pair).
+    - Circular Lists are possible, where the last cell points to the
+      first.
+    - Association Lists are lists of pairs, and are good for small
+      amounts of data and for prototyping (alists).
+    - Lisp syntax expression are great at list or tree like data, but
+      are opaque for more complex data.
+    - If Your data is in the form of a mathematical graph, visualize
+      it with =graphviz=.
+    - Common Technique: Print output to console, wrap in thunk,
+      redirect =*standard-output*=.
+
+** Chapter 8 - This Ain't Your Daddy's Wumpus
+   
