@@ -2067,8 +2067,8 @@ with all of the code I copied during that work.
       NOTE: There is also a =substitute-if-not= function, but all
       =-not= functions are considered deprecated, and should not be
       used.
-      
-      #+begin_src lisp
+
+      #+begin_src lisp :noweb-ref graph-util
 	(defun dot-name (exp)
 	  (substitute-if
 	   #\_
@@ -2111,7 +2111,7 @@ with all of the code I copied during that work.
       /keyword parameter/, =write-to-string= would do things like
       placing new-lines in the string, or indentation.
 
-      #+begin_src lisp
+      #+begin_src lisp :noweb-ref graph-util
 	(defparameter *max-label-length* 30)
 	
 	(defun dot-label (exp)
@@ -2140,8 +2140,7 @@ with all of the code I copied during that work.
       code, as You can see the output on the screen in the REPL (or in
       org-babel).
 
-      
-      #+begin_src lisp
+      #+begin_src lisp :noweb-ref graph-util
 	(defun nodes->dot (nodes)
 	  (mapc (lambda (node)
 		  (fresh-line)
@@ -2170,7 +2169,7 @@ with all of the code I copied during that work.
       This will be strikingly similar to the former function
       =node->dot=, but for the =edges= data.
 
-      #+begin_src lisp
+      #+begin_src lisp :noweb-ref graph-util
 	(defun edges->dot (edges)
 	  (mapc (lambda (node)
 		  (mapc (lambda (edge)
@@ -2196,7 +2195,7 @@ with all of the code I copied during that work.
       The last step is composing the above functions into a single
       function that will output the DOT info for the entire structure.
 
-      #+begin_src lisp
+      #+begin_src lisp :noweb-ref graph-util
 	(defun graph->dot (nodes edges)
 	  (princ "digraph{")
 	  (nodes->dot nodes)
@@ -2246,15 +2245,15 @@ with all of the code I copied during that work.
       for this, but as IO is not needed apart from running the
       command, the repo used =sb-ext:run-program=. I think that that
       is a good choice.
-      
-      #+begin_src lisp
+
+      #+begin_src lisp :noweb-ref graph-util
 	(defun dot->png (fname thunk)
 	  (with-open-file (*standard-output*
 			   fname
 			   :direction :output
 			   :if-exists :supersede)
 	    (funcall thunk))
-	  (sb-ext:run-program "dot" `("-Tpng" "-O" ,fname) :search T)))
+	  (sb-ext:run-program "dot" `("-Tpng" "-O" ,fname) :search T))
 	
       #+end_src
 
@@ -2336,7 +2335,7 @@ with all of the code I copied during that work.
      /alist/ of edges, write the DOT info to a file of that filename,
      and then run =neato= on that file to create the image.
 
-     #+begin_src lisp
+     #+begin_src lisp :noweb-ref graph-util
        (defun graph->png (fname nodes edges)
 	 (dot->png fname
 		   (lambda ()
@@ -2398,8 +2397,8 @@ with all of the code I copied during that work.
        the /thunk/, we don't need to rewrite it for this change. So,
        we'll just make a new wrapper function that automatically plugs
        our new function in as the /thunk/.
-    
-    #+begin_src lisp
+
+    #+begin_src lisp :noweb-ref graph-util
       (defun uedges->dot (edges)
 	(maplist (lambda (lst)
 		   (mapc (lambda (edge)
@@ -2452,3 +2451,222 @@ with all of the code I copied during that work.
 
 ** Chapter 8 - This Ain't Your Daddy's Wumpus
    
+*** Concept of Grand Theft Wumpus
+   We're reminded that we've just built a simple game with
+   mathematical graphs.
+
+   Then, we're reminded of "Hunt the Wumpus", which is a game I've
+   played before. It was in the =bsd-games= package on Slackware back
+   when I used it as my main OS.
+
+   That said, we are not making "Hunt the Wumpus". Instead we're going
+   to make something the author calls "Grand Theft Wumpus".
+
+   The premise is quite different: You are the Lisp Alien, and You've
+   just robbed a liquor store with the Wumpus. The Wumpus, of course,
+   double crosses You and makes off with the money in Your car. You
+   shot him in the kidney as he got away, though, which will
+   presumably leave a trail for us to follow.
+
+   Nope, instead we are hoping it makes him lay low in the current
+   city (Congestion City) long enough for us to find him. Of course,
+   much like the original game, the roads in Congestion City are very
+   convoluted, and it will be difficult to get around. However, we
+   have a pocket computer and our graphing utilities with which to
+   conquer this maze.
+
+   The Wumpus will always scout out a new hiding place before he uses
+   it. And, since he is injured, any location 1 or 2 blocks away with
+   have blood stains. We have a single bullet with which to kill him,
+   so we need to be very sure he is in the spot we will target before
+   shooting.
+
+   Of course, if it were just You two in the city, it would be too
+   easy. So, there are also three other teams (The Gruesome Glowworm
+   Gang) hunting around, that will kidnap You and drop You off
+   somewhere else in the town if they catch You. However, they are
+   Glowbugs: So, if You see blinking lights, You know that they are
+   one street away.
+
+   And of course of course, the cops have set up some roadblocks
+   (edges where they will catch You if You travel that way), but You
+   don't know how many or where they are.
+
+   
+
+*** Defining the Edges of Congestion City
+
+**** The =load= Function
+    First thing's first: We have to actually make the file
+    =graph-util.lisp= that it expects us to have made in a previous
+    chapter.
+
+    Not too difficult; Let's just pull each block into a new source
+    block (which will make unexecutable but exportable) using /noweb
+    style/ references. We'll go back and assign some names to the
+    needed code blocks.
+
+    Actually, per the [[https://orgmode.org/manual/Noweb-Reference-Syntax.html][manual]], we can just assign all the relevant
+    codeblocks the same =:noweb-ref= header argument, and it will pull
+    them all (in order) into the same reference.
+    
+    #+begin_src lisp :eval never :noweb yes :tangle ./lib/graph-util.lisp
+      <<graph-util>>
+    #+end_src
+
+    It worked!
+
+    Now, let's see if it lets us load it.
+
+    #+begin_src lisp
+      (load "./lib/graph-util.lisp")
+    #+end_src
+
+    #+RESULTS:
+    : T
+
+    It does!
+
+    
+**** Preamble and explanation
+     We're obviously going to be calling a new function here: =load=
+     takes the location of a file on disk that is full of Lisp code,
+     and evaluates it all in the current session (basically allowing
+     You to load libraries and packages, etc). This allows us to
+     ensure that our graphing utilities are available without having
+     to manually go back and rerun previous code blocks.
+
+     As for the other declarations:
+     
+     - **node-num** is the number of locations (nodes) in the city.
+     - **edge-num** is the number of streets connecting those
+       locations (edges).
+     - **worm-num** is the number of glowworm teams.
+     - **cop-odds** is used for the roadblocks (odds of 1 in
+       **cop-odds**).
+
+     #+begin_src lisp
+       (load "./lib/graph-util.lisp")
+       (defparameter *congestion-city-nodes* nil)
+       (defparameter *congestion-city-edges* nil)
+       (defparameter *visited-nodes* nil)
+       (defparameter *node-num* 30)
+       (defparameter *edge-num* 45)
+       (defparameter *worm-num* 3)
+       (defparameter *cop-odds* 15)
+     #+end_src
+
+     #+RESULTS:
+     : *COP-ODDS*
+
+     Now, we're going to make a random list of edges to connect all of
+     the nodes.
+
+     We'll start with the =random-node= function, which simply returns
+     a random number between 1 and *node-num* inclusive (we are using
+     the =1+= function here to achieve this; normally it's 0 and
+     target exclusive).
+
+     Then we create the =edge-pair= function, which will take two
+     numbers as input. Unless the two numbers are equal, it will
+     return a list connecting them to one another (and back
+     again!). This is because we're using an /undirected graph/ for
+     our city, as opposed to a /directed graph/.
+
+     Finally, we compose these two functions into a bigger function
+     called =make-edge-list= that will create our final list of
+     edges. It does this using a new function, =loop=, which we'll
+     look at closer in the next section.
+
+     Reading from the inside out, we have our =edge-pair= function
+     being collected on repeat, up until we've done so the same number
+     of times as *edge-num*.
+
+     We are them applying the =append= function (using /sharp-quoting/
+     and =apply=).
+
+     #+begin_src lisp
+       (defun random-node ()
+	 (1+ (random *node-num*)))
+       (defun edge-pair (a b)
+	 (unless (eql a b)
+	   (list (cons a b) (cons b a))))
+       (defun make-edge-list ()
+	 (apply #'append (loop repeat *edge-num*
+			       collect (edge-pair (random-node) (random-node)))))
+     #+end_src
+
+     #+RESULTS:
+     : MAKE-EDGE-LIST
+
+     Let's give this function a try.
+
+     #+begin_src lisp
+       (make-edge-list)
+     #+end_src
+
+     #+RESULTS:
+     : ((29 . 23) (23 . 29) (15 . 26) (26 . 15) (13 . 6) (6 . 13) (2 . 27)
+     : (27 . 2) (12 . 4) (4 . 12) (6 . 5) (5 . 6) (27 . 17) (17 . 27) (8 . 5)
+     : (5 . 8) (26 . 27) (27 . 26) (2 . 18) (18 . 2) (20 . 24) (24 . 20) (11
+     : . 19) (19 . 11) (25 . 26) (26 . 25) (29 . 28) (28 . 29) (29 . 14) (14
+     : . 29) (18 . 27) (27 . 18) (15 . 8) (8 . 15) (10 . 14) (14 . 10) (12
+     : . 9) (9 . 12) (13 . 27) (27 . 13) (16 . 1) (1 . 16) (6 . 13) (13 . 6)
+     : (14 . 7) (7 . 14) (28 . 7) (7 . 28) (3 . 14) (14 . 3) (29 . 15) (15
+     : . 29) (15 . 19) (19 . 15) (21 . 12) (12 . 21) (19 . 8) (8 . 19) (26
+     : . 3) (3 . 26) (3 . 5) (5 . 3) (5 . 10) (10 . 5) (26 . 10) (10 . 26)
+     : (27 . 2) (2 . 27) (8 . 20) (20 . 8) (15 . 2) (2 . 15) (9 . 21) (21
+     : . 9) (9 . 7) (7 . 9) (4 . 12) (12 . 4) (13 . 19) (19 . 13) (10 . 15)
+     : (15 . 10) (9 . 26) (26 . 9) (12 . 29) (29 . 12) (11 . 20) (20 . 11))
+
+     
+**** Looping with the =loop= Command
+     The =loop= function loops over data, and is fairly powerful.
+
+     We'll be examining it in greater detail in Chapter 10, but we're
+     introducing it now. Here's a simple example.
+
+     #+begin_src lisp
+       (loop repeat 10
+	     collect 1)
+     #+end_src
+
+     #+RESULTS:
+     | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
+
+     We can also keep a running count with a different form.
+
+     #+begin_src lisp
+       (loop for n from 1 to 10
+	     collect n)
+     #+end_src
+
+     #+RESULTS:
+     | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+
+     You can put any Lisp code in the =collect= part of the loop.
+
+     #+begin_src lisp
+       (loop for n from 1 to 10
+	     collect (+ 100 n))
+     #+end_src
+
+     #+RESULTS:
+     | 101 | 102 | 103 | 104 | 105 | 106 | 107 | 108 | 109 | 110 |
+
+
+     
+**** Preventing Islands
+     If a node doesn't receive at least one edge, it is an island (and
+     inaccessible to the rest of the map.)
+
+     Instead of fixing our algorithm above to prevent this, we are
+     going to simply find all islands at the end of generation and
+     connect them somewhere.
+
+     #+begin_src lisp
+       (defun direct-edges (node edge-list)
+	 (remove-if-not (lambda (x)
+			  (eql (car x) node))
+			edge-list))
+     #+end_src
