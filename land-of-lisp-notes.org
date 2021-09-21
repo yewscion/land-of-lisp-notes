@@ -44,7 +44,7 @@ with all of the code I copied during that work.
 ** Chapter 2 - Creating Your First Lisp Program
    We're going to be developing a guess-my-number game.
 *** Defining Global Variables
-   #+begin_src lisp 
+   #+begin_src lisp
      (defparameter *small* 1)
      (defparameter *big* 100)
    #+end_src
@@ -90,7 +90,7 @@ with all of the code I copied during that work.
      (defun smaller ()
        (setf *big* (1- (guess-my-number)))
        (guess-my-number))
-    
+
      (defun bigger ()
        (setf *small* (1+ (guess-my-number)))
        (guess-my-number))
@@ -124,7 +124,7 @@ with all of the code I copied during that work.
      (bigger)
      (smaller)
      (bigger)
-    
+
    #+end_src
 
    We've done it! Time to review the book; I wonder how different it
@@ -145,7 +145,7 @@ with all of the code I copied during that work.
 
    #+begin_src lisp
      (let ((a 5)
-	   (b 6))
+           (b 6))
        (+ a b))
    #+end_src
 
@@ -154,14 +154,14 @@ with all of the code I copied during that work.
 
    There are two similar functions for local functions, flet and
    labels.
-  
+
    #+begin_src lisp
      (flet ((f (n)
-	      (+ n 10))
-	    (g (n)
-	      (- n 6)))
+              (+ n 10))
+            (g (n)
+              (- n 6)))
        (g (f 5)))
-    
+
    #+end_src
 
    flet is the simpler one, which behaves much the way let does. It's
@@ -171,9 +171,9 @@ with all of the code I copied during that work.
 
    #+begin_src lisp
      (labels ((a (n)
-		(+ n 5))
-	      (b (n)
-		(+ (a n) 6)))
+                (+ n 5))
+              (b (n)
+                (+ (a n) 6)))
        (b 10))
    #+end_src
 
@@ -192,7 +192,7 @@ with all of the code I copied during that work.
 
    Two pieces of text can have the /different/ syntax, but /identical/
    semantics, if they are in different languages.
-  
+
    *Having a simple syntax is a defining feature of the Lisp language.*
 
    A /Reader/ is the part of a Lisp compiler or interpreter that reads
@@ -226,9 +226,9 @@ with all of the code I copied during that work.
     #+begin_src lisp
       (eq 'fooo 'FoOo)
     #+end_src
-   
+
 *** Numbers
-   
+
     Lisp supports both integers and floating point numbers.
 
     #+begin_src lisp :results output
@@ -254,10 +254,10 @@ with all of the code I copied during that work.
     #+begin_src lisp
       (princ "Tutti Frutti")
     #+end_src
-   
+
     (The =princ= function does /not/ output a newline, and is therefore
     less READable than the =print= function.)
-   
+
     You can also include /escaped characters/ using standard backslash
     notation.
 
@@ -349,7 +349,7 @@ with all of the code I copied during that work.
  specific data out of a list.
 
  #+begin_src lisp
-   (cadadr '((perl c cpp) (lisp clojure haskell) scheme)) 
+   (cadadr '((perl c cpp) (lisp clojure haskell) scheme))
  #+end_src
 
  In short, we've learned:
@@ -391,15 +391,15 @@ with all of the code I copied during that work.
     #+begin_src lisp
       (cons
        (cons 'peas
-	     (cons 'carrots
-		   (cons 'tomatoes
-			 ())))
+             (cons 'carrots
+                   (cons 'tomatoes
+                         ())))
        (cons
-	(cons 'pork
-	      (cons 'beef
-		    (cons 'chicken
-			  ())))
-	()))
+        (cons 'pork
+              (cons 'beef
+                    (cons 'chicken
+                          ())))
+        ()))
     #+end_src
 
     Here are some c*r functions operating on the list: ='((peas carrots
@@ -428,16 +428,16 @@ with all of the code I copied during that work.
 
     #+begin_src lisp
       (if '()
-	  'i-am-true
-	  'i-am-false)
+          'i-am-true
+          'i-am-false)
     #+end_src
 
     Any non-empty list will evaluate to true.
 
     #+begin_src lisp
       (if '(1)
-	  'i-am-true
-	  'i-am-false)
+          'i-am-true
+          'i-am-false)
     #+end_src
 
     This allows us to process /recursion/ very easily, by taking items
@@ -449,10 +449,10 @@ with all of the code I copied during that work.
 
     #+begin_src lisp
       (defun my-length (list)
-	(if list
-	    (1+ (my-length (cdr list)))
-	    0))
-      
+        (if list
+            (1+ (my-length (cdr list)))
+            0))
+
       (my-length '(list with four symbols))
     #+end_src
 
@@ -498,15 +498,15 @@ with all of the code I copied during that work.
     value =nil= is returned.
     #+begin_src lisp :results output
       (if (= (+ 1 2) 3)
-	  (print "yup")
-	  (print "nope"))
+          (print "yup")
+          (print "nope"))
       (if (= (+ 1 2) 4)
-	  (print "yup")
-	  (print "nope"))
+          (print "yup")
+          (print "nope"))
       (if (= (+ 1 2) 3)
-	  (print "yup"))
+          (print "yup"))
       (if (= (+ 1 2) 4)
-	  (print "yup"))
+          (print "yup"))
     #+end_src
 
     As =nil= is equivalent to an empty list, it then becomes obvious
@@ -515,15 +515,15 @@ with all of the code I copied during that work.
 
     #+begin_src lisp :results output
       (if '(1)
-	  (print "Not Empty")
-	  (print "Empty"))
+          (print "Not Empty")
+          (print "Empty"))
       (if '()
-	  (print "Not Empty")
-	  (print "Empty"))
+          (print "Not Empty")
+          (print "Empty"))
       (if (if (= (+ 1 2) 4)
-	      (print "yup"))
-	  (print "This won't happen.")
-	  (print "The original value was nil."))
+              (print "yup"))
+          (print "This won't happen.")
+          (print "The original value was nil."))
     #+end_src
 
     Usually, when a function is executed in lisp, all of the
@@ -534,8 +534,8 @@ with all of the code I copied during that work.
 
     #+begin_src lisp
       (if (oddp 5)
-	  'odd-number
-	  (/ 1 0))
+          'odd-number
+          (/ 1 0))
     #+end_src
 
     Since only the chosen expression is evaluated, the =(/ 1 0)= else
@@ -570,10 +570,10 @@ with all of the code I copied during that work.
     #+begin_src lisp :results output
       (defvar *number-was-odd* nil)
       (if (oddp 5)
-	  (progn (setf *number-was-odd* t)
-		 (print *number-was-odd*)
-		 (print "odd number"))
-	  'even-number)
+          (progn (setf *number-was-odd* t)
+                 (print *number-was-odd*)
+                 (print "odd number"))
+          'even-number)
     #+end_src
 
 *** Beyond if: when and unless
@@ -592,17 +592,17 @@ with all of the code I copied during that work.
 
     #+begin_src lisp :results output
       (when (oddp 5)
-	(print "Yup")
-	(print "5 is indeed Odd."))
+        (print "Yup")
+        (print "5 is indeed Odd."))
       (unless (oddp 4)
-	(print "Yup")
-	(print "4 is not Odd."))
+        (print "Yup")
+        (print "4 is not Odd."))
       (when (oddp 4)
-	(print "Yup")
-	(print "5 is indeed Odd."))
+        (print "Yup")
+        (print "5 is indeed Odd."))
       (unless (oddp 5)
-	(print "Yup")
-	(print "4 is not Odd."))
+        (print "Yup")
+        (print "4 is not Odd."))
     #+end_src
 
 *** The Command that Does it All: cond
@@ -636,21 +636,21 @@ with all of the code I copied during that work.
     #+begin_src lisp :results output
       (defvar *arch-enemy* nil)n
       (defun pudding-eater (person)
-	(cond
-	  (
-	   (eq person 'henry)
-	   (setf *arch-enemy* 'stupid-lisp-alien)
-	   (print "Curse You Lisp alien - You ate my pudding!")
-	   )
-	  (
-	   (eq person 'johnny)
-	   (setf *arch-enemy* 'useless-old-johnny)
-	   (print "I hope You choked on my Pudding, Johnny.")
-	   )
-	  (
-	   t
-	   (print "Why'd You eat my pudding, stranger?")
-	   )))
+        (cond
+          (
+           (eq person 'henry)
+           (setf *arch-enemy* 'stupid-lisp-alien)
+           (print "Curse You Lisp alien - You ate my pudding!")
+           )
+          (
+           (eq person 'johnny)
+           (setf *arch-enemy* 'useless-old-johnny)
+           (print "I hope You choked on my Pudding, Johnny.")
+           )
+          (
+           t
+           (print "Why'd You eat my pudding, stranger?")
+           )))
       (pudding-eater 'johnny)
       (print *arch-enemy*)
       (pudding-eater 'george-clooney)
@@ -678,21 +678,21 @@ with all of the code I copied during that work.
 
      #+begin_src lisp :results output
       (defun pudding-eater-case (person)
-	(case person
-	  (
-	   (henry)
-	   (setf *arch-enemy* 'stupid-lisp-alien)
-	   (print "Curse You Lisp alien - You ate my pudding!")
-	   )
-	  (
-	   'johnny
-	   (setf *arch-enemy* 'useless-old-johnny)
-	   (print "I hope You choked on my Pudding, Johnny.")
-	   )
-	  (
-	   otherwise
-	   (print "Why'd You eat my pudding, stranger?")
-	   )))
+        (case person
+          (
+           (henry)
+           (setf *arch-enemy* 'stupid-lisp-alien)
+           (print "Curse You Lisp alien - You ate my pudding!")
+           )
+          (
+           'johnny
+           (setf *arch-enemy* 'useless-old-johnny)
+           (print "I hope You choked on my Pudding, Johnny.")
+           )
+          (
+           otherwise
+           (print "Why'd You eat my pudding, stranger?")
+           )))
       (pudding-eater-case 'johnny)
       (print *arch-enemy*)
       (pudding-eater-case 'george-clooney)
@@ -706,7 +706,7 @@ with all of the code I copied during that work.
 
     The =or= form lets You check multiple conditionals at the same
     time, and only returns false if none of them are true.
-    
+
     #+begin_src lisp
       (print (and (oddp 7) (oddp 5) (oddp 3)))
       (print (and (oddp 6) (oddp 5) (oddp 3)))
@@ -756,10 +756,10 @@ with all of the code I copied during that work.
 
     #+begin_src lisp
       (if (member 1 '(3 4 1 5))
-		  (print "One is in the List")
-		  (print "One is not in the List"))
+                  (print "One is in the List")
+                  (print "One is not in the List"))
     #+end_src
-    
+
 
     However, the /way/ it returns true is unconventional and
     Lisp-driven:
@@ -786,9 +786,9 @@ with all of the code I copied during that work.
     #+begin_src lisp
       (print (find-if #'oddp '(2 4 5 6)))
       (if (find-if #'oddp '(2 4 5 6))
-	  (print "There is an odd number.")
-	  (print "There is no odd number."))
-      
+          (print "There is an odd number.")
+          (print "There is no odd number."))
+
     #+end_src
 
     The =find-if= function takes another function as an argument (as
@@ -825,11 +825,11 @@ with all of the code I copied during that work.
 
      That said, using =eq= is a must if the values being compared are
      known to be symbols.
-     
+
      #+begin_src lisp
        (defparameter *fruit* 'apple)
        (cond ((eq *fruit* 'apple) (print "It's an Apple"))
-	     ((eq *fruit* 'orange) (print "It's an Orange")))
+             ((eq *fruit* 'orange) (print "It's an Orange")))
      #+end_src
 
      It's worth noting that =eq= can be used to compare conses as
@@ -898,7 +898,7 @@ with all of the code I copied during that work.
     house. The game will not be complete until Chapter 17, but when it
     is You will be able to solve puzzles and win a magical donut.
 **** Basic Requirements
-     
+
     There is a picture that describes the world we are creating. Three
     areas (rooms): a living room, an attic, and a garden. There is a
     ladder connecting the living room to the attic, and a door
@@ -939,10 +939,10 @@ with all of the code I copied during that work.
     #+begin_src lisp :results value
       (defparameter *nodes* '((living-room (You are in the living-room. A
       wizard is snoring loudly on the couch.))
-			     (garden (You are in a beautiful garden. There
-			     is a well in front of You.))
-			     (attic (You are in the attic. There is a giant
-			     welding torch in the corner.))))
+                             (garden (You are in a beautiful garden. There
+                             is a well in front of You.))
+                             (attic (You are in the attic. There is a giant
+                             welding torch in the corner.))))
     #+end_src
 
 *** Describing the Location
@@ -957,7 +957,7 @@ with all of the code I copied during that work.
 
     #+begin_src lisp :results value
       (defun describe-location (location nodes)
-	(cadr (assoc location nodes)))
+        (cadr (assoc location nodes)))
     #+end_src
 
     And now we can use it to return /only/ the description.
@@ -978,9 +978,9 @@ with all of the code I copied during that work.
 
     #+begin_src lisp :results value
       (defparameter *edges* '((living-room (garden west door)
-			       (attic upstairs ladder))
-			      (garden (living-room east door))
-			      (attic (living-room downstairs ladder))))
+                               (attic upstairs ladder))
+                              (garden (living-room east door))
+                              (attic (living-room downstairs ladder))))
     #+end_src
 
     With this structure, we can now access things using a standard
@@ -996,10 +996,10 @@ with all of the code I copied during that work.
 
     This flipping is one of the many benefits to working in symbols
     instead of directly in strings.
-    
+
     #+begin_src lisp :results value
       (defun describe-path (edge)
-	`(there is a ,(caddr edge) going ,(cadr edge) from here.))
+        `(there is a ,(caddr edge) going ,(cadr edge) from here.))
     #+end_src
 
     We are then going to compose this function into one that lets us
@@ -1011,10 +1011,10 @@ with all of the code I copied during that work.
     1. Find the relevant edges.
     2. Convert the edges to descriptions.
     3. Join the descriptions.
-       
+
     #+begin_src lisp :results value
       (defun describe-paths (location edges)
-	(apply #'append (mapcar #'describe-path (cdr (assoc location edges)))))
+        (apply #'append (mapcar #'describe-path (cdr (assoc location edges)))))
     #+end_src
 
     Let's test that right away.
@@ -1083,9 +1083,9 @@ with all of the code I copied during that work.
     #+begin_src lisp :results value
       (defparameter *objects* '(whiskey bucket frog chain))
       (defparameter *object-locations* '((whiskey living-room)
-					 (bucket living-room)
-					 (chain garden)
-					 (frog garden)))
+                                         (bucket living-room)
+                                         (chain garden)
+                                         (frog garden)))
     #+end_src
 
     To identify the objects in a current location, we are going to
@@ -1121,9 +1121,9 @@ with all of the code I copied during that work.
 
     #+begin_src lisp :results value
       (defun objects-at (loc objs obj-locs)
-	(labels ((at-loc-p (obj)
-		   (eq (cadr (assoc obj obj-locs)) loc)))
-	  (remove-if-not #'at-loc-p objs)))
+        (labels ((at-loc-p (obj)
+                   (eq (cadr (assoc obj obj-locs)) loc)))
+          (remove-if-not #'at-loc-p objs)))
     #+end_src
 
     Let's test it.
@@ -1144,9 +1144,9 @@ with all of the code I copied during that work.
 
     #+begin_src lisp :results value
       (defun describe-objects (loc objs obj-loc)
-	(labels ((describe-obj (obj)
-		   `(you see a ,obj on the floor.)))
-	  (apply #'append (mapcar #'describe-obj (objects-at loc objs obj-loc)))))
+        (labels ((describe-obj (obj)
+                   `(you see a ,obj on the floor.)))
+          (apply #'append (mapcar #'describe-obj (objects-at loc objs obj-loc)))))
     #+end_src
 
     Let's test this too.
@@ -1164,7 +1164,7 @@ with all of the code I copied during that work.
 
     We'll initialize it to the living-room, as this will be the
     location of the player at the start of the game.
-    
+
     #+begin_src lisp :results value
       (defparameter *location* 'living-room)
     #+end_src
@@ -1182,9 +1182,9 @@ with all of the code I copied during that work.
     functional approach and a non-functional approach.
     #+begin_src lisp :results value
       (defun look ()
-	(append (describe-location *location* *nodes*)
-		(describe-paths *location* *edges*)
-		(describe-objects *location* *objects* *object-locations*)))
+        (append (describe-location *location* *nodes*)
+                (describe-paths *location* *edges*)
+                (describe-objects *location* *objects* *object-locations*)))
     #+end_src
 
     Let's test it.
@@ -1219,16 +1219,16 @@ with all of the code I copied during that work.
     of =false= and =nil=. If =next= has a value, then =if= moves the
     player. If not, that means the direction is impossible, and it
     tells the player as much.
-    
+
     #+begin_src lisp :results value
       (defun walk (direction)
-	(let ((next (find direction
-			  (cdr (assoc *location* *edges*))
-			  :key #'cadr)))
-	  (if next
-	      (progn (setf *location* (car next))
-		     (look))
-	      '(you cannot go that way.))))
+        (let ((next (find direction
+                          (cdr (assoc *location* *edges*))
+                          :key #'cadr)))
+          (if next
+              (progn (setf *location* (car next))
+                     (look))
+              '(you cannot go that way.))))
     #+end_src
 
     Let's test it out.
@@ -1257,11 +1257,11 @@ with all of the code I copied during that work.
 
     #+begin_src lisp
       (defun pickup (object)
-	(cond ((member object
-		       (objects-at *location* *objects* *object-locations*))
-	       (push (list object 'body) *object-locations*)
-	       `(you are now carrying the ,object))
-	      (t '(you cannot get that.))))
+        (cond ((member object
+                       (objects-at *location* *objects* *object-locations*))
+               (push (list object 'body) *object-locations*)
+               `(you are now carrying the ,object))
+              (t '(you cannot get that.))))
     #+end_src
 
     I'm honestly not a huge fan of this design, at least for now.. The
@@ -1299,7 +1299,7 @@ with all of the code I copied during that work.
 
     #+begin_src lisp
       (defun inventory ()
-	(cons 'items- (objects-at 'body *objects* *object-locations*)))
+        (cons 'items- (objects-at 'body *objects* *object-locations*)))
     #+end_src
 
     Let's try it out.
@@ -1340,11 +1340,11 @@ with all of the code I copied during that work.
     #+begin_src lisp :results output verbatim
       (print "foo")
       (progn (print "this")
-	     (print "is")
-	     (print "a")
-	     (print "test"))
+             (print "is")
+             (print "a")
+             (print "test"))
     #+end_src
-    
+
     They mention that, if You run the =print= command in a REPL, the
     result is shown twice: Once for the return value of the =print=
     command, and once for its side effect, which is printing the text
@@ -1357,10 +1357,10 @@ with all of the code I copied during that work.
     #+begin_src lisp :results output verbatim
       (prin1 "foo")
       (progn (prin1 "this")
-	     (prin1 "is")
-	     (prin1 "a")
-	     (prin1 "test"))
-      
+             (prin1 "is")
+             (prin1 "a")
+             (prin1 "test"))
+
     #+end_src
 
 
@@ -1378,13 +1378,13 @@ with all of the code I copied during that work.
     we set up a local variable (=name=) and =read= into it. It waits
     for a Return, and then sets the variable equal to what was
     input. Finally, we use the variable to print a greeting.
-    
+
     #+begin_src lisp :results output
       (defun say-hello ()
-	(print "Please type Your name:")
-	(let ((name (read)))
-	  (print "Nice to meet You, ")
-	  (print name)))
+        (print "Please type Your name:")
+        (let ((name (read)))
+          (print "Nice to meet You, ")
+          (print name)))
     #+end_src
 
     Now, because we are asking for user input, =org-babel= doesn't
@@ -1422,10 +1422,10 @@ with all of the code I copied during that work.
 
     #+begin_src lisp :results output
       (defun add-five ()
-	(print "Enter a Number: ")
-	(let ((number (read)))
-	  (print "When I add 5 I get:")
-	  (print (+ number 5))))
+        (print "Enter a Number: ")
+        (let ((number (read)))
+          (print "When I add 5 I get:")
+          (print (+ number 5))))
     #+end_src
 
     Here are some examples of printing various types of values.
@@ -1440,7 +1440,7 @@ with all of the code I copied during that work.
     Also note the quoting. We could omit the quoting in each case
     aside from the symbol (since it could refer to a function or
     value).
-    
+
     #+begin_src lisp :results output
       (print '3)
       (print '3.4)
@@ -1491,9 +1491,9 @@ with all of the code I copied during that work.
       (print '#\a)
       (princ '#\a)
       (progn (princ #\newline)
-	     (princ "This Sentence will be interrupted")
-	     (princ #\newline)
-	     (princ "by an annoying newline character."))
+             (princ "This Sentence will be interrupted")
+             (princ #\newline)
+             (princ "by an annoying newline character."))
     #+end_src
 
     The thing to note here is that while =print= prints anything in a
@@ -1517,11 +1517,11 @@ with all of the code I copied during that work.
 
     #+begin_src lisp
       (defun say-hello()
-	(princ "Please type Your name: ")
-	(let ((name (read-line)))
-	  (princ "Nice to meet You, ")
-	  (princ name)
-	  (princ '#\newline)))
+        (princ "Please type Your name: ")
+        (let ((name (read-line)))
+          (princ "Nice to meet You, ")
+          (princ name)
+          (princ '#\newline)))
     #+end_src
 *** The Symmetry Between Code and Data in Lisp
     Lisp can also treat program code and data interchangeablly. A
@@ -1570,7 +1570,7 @@ with all of the code I copied during that work.
 
      #+begin_src lisp
        (defun game-repl ()
-	 (loop (print (eval (read)))))
+         (loop (print (eval (read)))))
      #+end_src
 
      That's not the most useful REPL, though. Let's try harder.
@@ -1580,13 +1580,13 @@ with all of the code I copied during that work.
      as the user did not type "quit", it evals and prints using
      =game-eval= and =game-print= the command in =cmd=. Finally, it
      recurses.
-     
+
      #+begin_src lisp
        (defun game-repl ()
-	 (let ((cmd (game-read)))
-	   (unless (eq (car cmd) 'quit)
-	     (game-print (game-eval cmd))
-	     (game-repl))))
+         (let ((cmd (game-read)))
+           (unless (eq (car cmd) 'quit)
+             (game-print (game-eval cmd))
+             (game-repl))))
      #+end_src
 **** game-read
      We'll need to define our "game-" prefixed functions. Let's start
@@ -1601,14 +1601,14 @@ with all of the code I copied during that work.
      all parameters in our new list. It does this by =cons= -ing the
      =car= of =cmd= with a =mapcar= of the =cdr= of =cmd= using
      =quote-it=, our local function.
-     
+
      #+begin_src lisp
        (defun game-read ()
-	 (let ((cmd (read-from-string
-		     (concatenate 'string "(" (read-line) ")"))))
-	   (flet ((quote-it (x)
-		    (list 'quote x)))
-	     (cons (car cmd) (mapcar #'quote-it (cdr cmd))))))
+         (let ((cmd (read-from-string
+                     (concatenate 'string "(" (read-line) ")"))))
+           (flet ((quote-it (x)
+                    (list 'quote x)))
+             (cons (car cmd) (mapcar #'quote-it (cdr cmd))))))
      #+end_src
 
      That is a lot of functions, but I understood them all!
@@ -1634,17 +1634,17 @@ with all of the code I copied during that work.
      (that is, if it is a member of the =*allowed-commands*=
      global). If it is, it runs =eval= on it. Otherwise, it tells the
      user it does not know the command supplied.
-     
+
      #+begin_src lisp
        (defparameter *allowed-commands* '(look walk pickup inventory))
        (defun game-eval (sexp)
-	 (if (member (car sexp) *allowed-commands*)
-	     (eval sexp)
-	     '(i do not know that command.)))
+         (if (member (car sexp) *allowed-commands*)
+             (eval sexp)
+             '(i do not know that command.)))
      #+end_src
 
      I got the explanation correct!
-     
+
      This is fairly basic protection. There is more to learn in the
      section called "The Dangers of read and eval".
 **** game-print
@@ -1728,24 +1728,24 @@ with all of the code I copied during that work.
 
      #+begin_src lisp
        (defun tweak-text (lst caps lit)
-	 (when lst
-	   (let ((item (car lst))
-		 (rest (cdr lst)))
-	     (cond ((eq item #\space) (cons item (tweak-text rest caps lit)))
-		   ((member item '(#\! #\? #\.)) (cons item (tweak-text rest t lit)))
-		   ((eq item #\") (tweak-text rest caps (not lit)))
-		   (lit (cons item (tweak-text rest nil lit)))
-		   ((or caps lit) (cons (char-upcase item) (tweak-text rest nil lit)))
-		   (t (cons (char-downcase item) (tweak-text rest nil nil)))))))
-       
+         (when lst
+           (let ((item (car lst))
+                 (rest (cdr lst)))
+             (cond ((eq item #\space) (cons item (tweak-text rest caps lit)))
+                   ((member item '(#\! #\? #\.)) (cons item (tweak-text rest t lit)))
+                   ((eq item #\") (tweak-text rest caps (not lit)))
+                   (lit (cons item (tweak-text rest nil lit)))
+                   ((or caps lit) (cons (char-upcase item) (tweak-text rest nil lit)))
+                   (t (cons (char-downcase item) (tweak-text rest nil nil)))))))
+
        (defun game-print (lst)
-	 (princ (coerce (tweak-text (coerce (string-trim "() "
-							 (prin1-to-string lst))
-					    'list)
-				    t
-				    nil)
-			'string))
-	 (fresh-line))
+         (princ (coerce (tweak-text (coerce (string-trim "() "
+                                                         (prin1-to-string lst))
+                                            'list)
+                                    t
+                                    nil)
+                        'string))
+         (fresh-line))
      #+end_src
 
      Okay, there were a few things I got somewhat wrong, but that's
@@ -1818,18 +1818,18 @@ with all of the code I copied during that work.
 
     Note how the =cons= cells are absent from the printed list. This
     is a convenience feature for humans, they are still there.
-    
+
     #+begin_src lisp
       (cons 1 (cons 2 (cons 3 nil)))
     #+end_src
-    
+
 **** Dotted Lists
     Suppose when we build a list we don't use a consistent string of
     =cons= cells. What happens then?
 
     This is a /dotted list/, which is a list that does not end with
     the expected =nil=, but instead ends with some other value.
-    
+
     #+begin_src lisp
       (cons 1 (cons 2 3))
     #+end_src
@@ -1846,7 +1846,7 @@ with all of the code I copied during that work.
     #+begin_src lisp
       `(1 . (2 . (3 . nil)))
     #+end_src
-    
+
 **** Pairs
      A common use for /dotted lists/ in Lisp is /pairs/. This is
      convenient (because You can now use =car= and =cdr= to interact
@@ -1872,7 +1872,7 @@ with all of the code I copied during that work.
      We can easily make a circular list using =setf=. The ability to
      do things like this will be explored more in Chapter 9. For now,
      here is a circular list of 1, 2, 3, 1, 2, 3 repeating forever.
-     
+
      #+begin_src lisp
        (setf *print-circle* t)
        (defparameter foo '(1 2 3))
@@ -1891,8 +1891,8 @@ with all of the code I copied during that work.
 
      #+begin_src lisp
        (defparameter *drink-order* '((bill . double-espresso)
-				     (lisa . small-drip-coffee)
-				     (john . medium-latte)))
+                                     (lisa . small-drip-coffee)
+                                     (john . medium-latte)))
      #+end_src
 
      This is so common in Lisp that the function =assoc= is named for
@@ -1941,18 +1941,18 @@ with all of the code I copied during that work.
 
      #+begin_src lisp
        (defparameter *house* '((walls
-				(mortar
-				 (cement)
-				 (water)
-				 (sand))
-				(bricks))
-			       (windows
-				(glass)
-				(frame)
-				(curtains))
-			       (roof
-				(shingles)
-				(chimney))))
+                                (mortar
+                                 (cement)
+                                 (water)
+                                 (sand))
+                                (bricks))
+                               (windows
+                                (glass)
+                                (frame)
+                                (curtains))
+                               (roof
+                                (shingles)
+                                (chimney))))
      #+end_src
 
      The fact that it is made up of nested lists makes it easy to
@@ -1978,19 +1978,19 @@ with all of the code I copied during that work.
 
      #+begin_src lisp
        (defparameter *wizard-nodes* '((living-room (you are in the
-				      living-room. a wizard is snoring loudly
-				      on the couch.))
-				      (garden (you are in a beautiful
-				      garden. there is a well in front of
-				      you.))
-				      (attic (you are in the attic. there is
-				      a giant welding torch in the
-				      corner.))))
+                                      living-room. a wizard is snoring loudly
+                                      on the couch.))
+                                      (garden (you are in a beautiful
+                                      garden. there is a well in front of
+                                      you.))
+                                      (attic (you are in the attic. there is
+                                      a giant welding torch in the
+                                      corner.))))
        (defparameter *wizard-edges* '((living-room (garden west door)
-				       (attic upstairs ladder))
-				       (garden (living-room east door))
-				      (attic (living-room downstairs
-				      ladder))))
+                                       (attic upstairs ladder))
+                                       (garden (living-room east door))
+                                      (attic (living-room downstairs
+                                      ladder))))
      #+end_src
 
 *** Creating a Graph
@@ -2014,11 +2014,11 @@ with all of the code I copied during that work.
 
     #+begin_src dot :file ./imgs/example-of-dot.png
       digraph {
-	      a->b->c;
+              a->b->c;
       }
     #+end_src
 
-  
+
     I also note that, due to =org-babel=, my workflow is greatly
     simplified: It will compile the code into a named image in the
     repo and then embed it in the file itself, so long as I have
@@ -2069,19 +2069,19 @@ with all of the code I copied during that work.
       used.
 
       #+begin_src lisp :noweb-ref graph-util
-	(defun dot-name (exp)
-	  (substitute-if
-	   #\_
-	   (complement #'alphanumericp)
-	   (prin1-to-string exp)))
+        (defun dot-name (exp)
+          (substitute-if
+           #\_
+           (complement #'alphanumericp)
+           (prin1-to-string exp)))
       #+end_src
 
       Here are some examples of how the =dot-name= function works.
-      
+
       #+begin_src lisp :results output verbatim
-	(print (dot-name 'living-room))
-	(print (dot-name 'foo!))
-	(print (dot-name 24))
+        (print (dot-name 'living-room))
+        (print (dot-name 'foo!))
+        (print (dot-name 24))
       #+end_src
 ***** Adding Labels to Graph Nodes
       We'll now focus on convering the labels for the nodes.
@@ -2112,15 +2112,15 @@ with all of the code I copied during that work.
       placing new-lines in the string, or indentation.
 
       #+begin_src lisp :noweb-ref graph-util
-	(defparameter *max-label-length* 30)
-	
-	(defun dot-label (exp)
-	  (if exp
-	      (let ((s (write-to-string exp :pretty nil)))
-		(if (> (length s) *max-label-length*)
-		    (concatenate 'string (subseq s 0 (- *max-label-length* 3)) "...")
-		    s))
-	      ""))
+        (defparameter *max-label-length* 30)
+
+        (defun dot-label (exp)
+          (if exp
+              (let ((s (write-to-string exp :pretty nil)))
+                (if (> (length s) *max-label-length*)
+                    (concatenate 'string (subseq s 0 (- *max-label-length* 3)) "...")
+                    s))
+              ""))
       #+end_src
 ***** Generating DOT Information for the Nodes
       Now that we have both identifiers and labels for nodes handled,
@@ -2141,14 +2141,14 @@ with all of the code I copied during that work.
       org-babel).
 
       #+begin_src lisp :noweb-ref graph-util
-	(defun nodes->dot (nodes)
-	  (mapc (lambda (node)
-		  (fresh-line)
-		  (princ (dot-name (car node)))
-		  (princ "[label=\"")
-		  (princ (dot-label node))
-		  (princ "\"];"))
-		nodes))
+        (defun nodes->dot (nodes)
+          (mapc (lambda (node)
+                  (fresh-line)
+                  (princ (dot-name (car node)))
+                  (princ "[label=\"")
+                  (princ (dot-label node))
+                  (princ "\"];"))
+                nodes))
       #+end_src
 
 
@@ -2158,10 +2158,10 @@ with all of the code I copied during that work.
       Note how we are not interested in the return value of the
       function, here, but only its output. *Lispers would say we are
       only interested in the /side effects/ of this function.*
-      
+
 
       #+begin_src lisp :results output verbatim
-	(nodes->dot *wizard-nodes*)
+        (nodes->dot *wizard-nodes*)
       #+end_src
 
       It works!
@@ -2170,24 +2170,24 @@ with all of the code I copied during that work.
       =node->dot=, but for the =edges= data.
 
       #+begin_src lisp :noweb-ref graph-util
-	(defun edges->dot (edges)
-	  (mapc (lambda (node)
-		  (mapc (lambda (edge)
-			  (fresh-line)
-			  (princ (dot-name (car node)))
-			  (princ "->")
-			  (princ (dot-name (car edge)))
-			  (princ "[label=\"")
-			  (princ (dot-label (cdr edge)))
-			  (princ "\"];"))
-			(cdr node)))
-		edges))
+        (defun edges->dot (edges)
+          (mapc (lambda (node)
+                  (mapc (lambda (edge)
+                          (fresh-line)
+                          (princ (dot-name (car node)))
+                          (princ "->")
+                          (princ (dot-name (car edge)))
+                          (princ "[label=\"")
+                          (princ (dot-label (cdr edge)))
+                          (princ "\"];"))
+                        (cdr node)))
+                edges))
       #+end_src
 
       And here's an example:
 
       #+begin_src lisp :results output verbatim
-	(edges->dot *wizard-edges*)
+        (edges->dot *wizard-edges*)
       #+end_src
 
       It's already easier to visualize the data, but let's continue.
@@ -2196,11 +2196,11 @@ with all of the code I copied during that work.
       function that will output the DOT info for the entire structure.
 
       #+begin_src lisp :noweb-ref graph-util
-	(defun graph->dot (nodes edges)
-	  (princ "digraph{")
-	  (nodes->dot nodes)
-	  (edges->dot edges)
-	  (princ "}"))
+        (defun graph->dot (nodes edges)
+          (princ "digraph{")
+          (nodes->dot nodes)
+          (edges->dot edges)
+          (princ "}"))
       #+end_src
 
       Note how only the most top-level markup is saved for the above
@@ -2212,7 +2212,7 @@ with all of the code I copied during that work.
 
       #+name: wizard-dot-info
       #+begin_src lisp :results output verbatim
-	(graph->dot *wizard-nodes* *wizard-edges*)
+        (graph->dot *wizard-nodes* *wizard-edges*)
       #+end_src
 
       Woo! This is *amazing*, as my focus is text manipulation. That
@@ -2228,8 +2228,8 @@ with all of the code I copied during that work.
 
       We can use the =:var= header for this.
 
-      #+begin_src dot :var input=wizard-dot-info :file ./imgs/wizard-info.png 
-	$input
+      #+begin_src dot :var input=wizard-dot-info :file ./imgs/wizard-info.png
+        $input
       #+end_src
 ***** Using Lisp
       Now we will do it the way the book wants, by saving the output
@@ -2247,14 +2247,14 @@ with all of the code I copied during that work.
       is a good choice.
 
       #+begin_src lisp :noweb-ref graph-util
-	(defun dot->png (fname thunk)
-	  (with-open-file (*standard-output*
-			   fname
-			   :direction :output
-			   :if-exists :supersede)
-	    (funcall thunk))
-	  (sb-ext:run-program "dot" `("-Tpng" "-O" ,fname) :search T))
-	
+        (defun dot->png (fname thunk)
+          (with-open-file (*standard-output*
+                           fname
+                           :direction :output
+                           :if-exists :supersede)
+            (funcall thunk))
+          (sb-ext:run-program "dot" `("-Tpng" "-O" ,fname) :search T))
+
       #+end_src
 
       This is also our introduction to something called /thunks/.
@@ -2283,17 +2283,17 @@ with all of the code I copied during that work.
       overwrite it with only the data specified.
 
       #+begin_src lisp
-	(with-open-file (my-stream
-			 "text/testfile.txt"
-			 :direction :output
-			 :if-exists :supersede)
-	  (princ "Hello File!" my-stream))
+        (with-open-file (my-stream
+                         "text/testfile.txt"
+                         :direction :output
+                         :if-exists :supersede)
+          (princ "Hello File!" my-stream))
       #+end_src
 
       And we can see that it worked.
-      
+
       #+begin_src bash :results output verbatim
-	cat text/testfile.txt
+        cat text/testfile.txt
       #+end_src
 ***** Creating a Stream
       All printing functions can accept a stream as an optional
@@ -2337,12 +2337,12 @@ with all of the code I copied during that work.
 
      #+begin_src lisp :noweb-ref graph-util
        (defun graph->png (fname nodes edges)
-	 (dot->png fname
-		   (lambda ()
-		     (graph->dot nodes edges))))
+         (dot->png fname
+                   (lambda ()
+                     (graph->dot nodes edges))))
      #+end_src
 
-     
+
      Calling the =graph-dot= function as a lambda in the thunk is an
      example of /delayed computation/. Such a thing allows us to call
      a function after a stream has been opened, for instance. It
@@ -2358,7 +2358,7 @@ with all of the code I copied during that work.
      should have been created here.
 
      [[./imgs/wizard.dot.png]]
-     
+
 
      It worked!
 
@@ -2400,27 +2400,27 @@ with all of the code I copied during that work.
 
     #+begin_src lisp :noweb-ref graph-util
       (defun uedges->dot (edges)
-	(maplist (lambda (lst)
-		   (mapc (lambda (edge)
-			   (unless (assoc (car edge) (cdr lst))
-			     (fresh-line)
-			     (princ (dot-name (caar lst)))
-			     (princ "--")
-			     (princ (dot-name (car edge)))
-			     (princ "[label=\"")
-			     (princ (dot-label (cdr edge)))
-			     (princ "\"];")))
-			 (cdar lst)))
-		 edges))
+        (maplist (lambda (lst)
+                   (mapc (lambda (edge)
+                           (unless (assoc (car edge) (cdr lst))
+                             (fresh-line)
+                             (princ (dot-name (caar lst)))
+                             (princ "--")
+                             (princ (dot-name (car edge)))
+                             (princ "[label=\"")
+                             (princ (dot-label (cdr edge)))
+                             (princ "\"];")))
+                         (cdar lst)))
+                 edges))
       (defun ugraph->dot (nodes edges)
-	(princ "graph{")
-	(nodes->dot nodes)
-	(uedges->dot edges)
-	(princ "}"))
+        (princ "graph{")
+        (nodes->dot nodes)
+        (uedges->dot edges)
+        (princ "}"))
       (defun ugraph->png (fname nodes edges)
-	(dot->png fname
-		  (lambda ()
-		    (ugraph->dot nodes edges))))
+        (dot->png fname
+                  (lambda ()
+                    (ugraph->dot nodes edges))))
     #+end_src
 
     Finally, let's use it to generate our undirected graph!
@@ -2450,7 +2450,6 @@ with all of the code I copied during that work.
       redirect =*standard-output*=.
 
 ** Chapter 8 - This Ain't Your Daddy's Wumpus
-   
 *** Concept of Grand Theft Wumpus
    We're reminded that we've just built a simple game with
    mathematical graphs.
@@ -2492,10 +2491,7 @@ with all of the code I copied during that work.
    (edges where they will catch You if You travel that way), but You
    don't know how many or where they are.
 
-   
-
 *** Defining the Edges of Congestion City
-
 **** The =load= Function
     First thing's first: We have to actually make the file
     =graph-util.lisp= that it expects us to have made in a previous
@@ -2509,7 +2505,7 @@ with all of the code I copied during that work.
     Actually, per the [[https://orgmode.org/manual/Noweb-Reference-Syntax.html][manual]], we can just assign all the relevant
     codeblocks the same =:noweb-ref= header argument, and it will pull
     them all (in order) into the same reference.
-    
+
     #+begin_src lisp :eval never :noweb yes :tangle ./lib/graph-util.lisp
       <<graph-util>>
     #+end_src
@@ -2522,12 +2518,8 @@ with all of the code I copied during that work.
       (load "./lib/graph-util.lisp")
     #+end_src
 
-    #+RESULTS:
-    : T
-
     It does!
 
-    
 **** Preamble and explanation
      We're obviously going to be calling a new function here: =load=
      takes the location of a file on disk that is full of Lisp code,
@@ -2537,7 +2529,7 @@ with all of the code I copied during that work.
      to manually go back and rerun previous code blocks.
 
      As for the other declarations:
-     
+
      - **node-num** is the number of locations (nodes) in the city.
      - **edge-num** is the number of streets connecting those
        locations (edges).
@@ -2545,7 +2537,7 @@ with all of the code I copied during that work.
      - **cop-odds** is used for the roadblocks (odds of 1 in
        **cop-odds**).
 
-     #+begin_src lisp
+     #+begin_src lisp :tangle wumpus.lisp
        (load "./lib/graph-util.lisp")
        (defparameter *congestion-city-nodes* nil)
        (defparameter *congestion-city-edges* nil)
@@ -2555,9 +2547,6 @@ with all of the code I copied during that work.
        (defparameter *worm-num* 3)
        (defparameter *cop-odds* 15)
      #+end_src
-
-     #+RESULTS:
-     : *COP-ODDS*
 
      Now, we're going to make a random list of edges to connect all of
      the nodes.
@@ -2585,19 +2574,16 @@ with all of the code I copied during that work.
      We are them applying the =append= function (using /sharp-quoting/
      and =apply=).
 
-     #+begin_src lisp
+     #+begin_src lisp :tangle wumpus.lisp
        (defun random-node ()
-	 (1+ (random *node-num*)))
+         (1+ (random *node-num*)))
        (defun edge-pair (a b)
-	 (unless (eql a b)
-	   (list (cons a b) (cons b a))))
+         (unless (eql a b)
+           (list (cons a b) (cons b a))))
        (defun make-edge-list ()
-	 (apply #'append (loop repeat *edge-num*
-			       collect (edge-pair (random-node) (random-node)))))
+         (apply #'append (loop repeat *edge-num*
+                               collect (edge-pair (random-node) (random-node)))))
      #+end_src
-
-     #+RESULTS:
-     : MAKE-EDGE-LIST
 
      Let's give this function a try.
 
@@ -2605,21 +2591,6 @@ with all of the code I copied during that work.
        (make-edge-list)
      #+end_src
 
-     #+RESULTS:
-     : ((29 . 23) (23 . 29) (15 . 26) (26 . 15) (13 . 6) (6 . 13) (2 . 27)
-     : (27 . 2) (12 . 4) (4 . 12) (6 . 5) (5 . 6) (27 . 17) (17 . 27) (8 . 5)
-     : (5 . 8) (26 . 27) (27 . 26) (2 . 18) (18 . 2) (20 . 24) (24 . 20) (11
-     : . 19) (19 . 11) (25 . 26) (26 . 25) (29 . 28) (28 . 29) (29 . 14) (14
-     : . 29) (18 . 27) (27 . 18) (15 . 8) (8 . 15) (10 . 14) (14 . 10) (12
-     : . 9) (9 . 12) (13 . 27) (27 . 13) (16 . 1) (1 . 16) (6 . 13) (13 . 6)
-     : (14 . 7) (7 . 14) (28 . 7) (7 . 28) (3 . 14) (14 . 3) (29 . 15) (15
-     : . 29) (15 . 19) (19 . 15) (21 . 12) (12 . 21) (19 . 8) (8 . 19) (26
-     : . 3) (3 . 26) (3 . 5) (5 . 3) (5 . 10) (10 . 5) (26 . 10) (10 . 26)
-     : (27 . 2) (2 . 27) (8 . 20) (20 . 8) (15 . 2) (2 . 15) (9 . 21) (21
-     : . 9) (9 . 7) (7 . 9) (4 . 12) (12 . 4) (13 . 19) (19 . 13) (10 . 15)
-     : (15 . 10) (9 . 26) (26 . 9) (12 . 29) (29 . 12) (11 . 20) (20 . 11))
-
-     
 **** Looping with the =loop= Command
      The =loop= function loops over data, and is fairly powerful.
 
@@ -2628,34 +2599,23 @@ with all of the code I copied during that work.
 
      #+begin_src lisp
        (loop repeat 10
-	     collect 1)
+             collect 1)
      #+end_src
-
-     #+RESULTS:
-     | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
 
      We can also keep a running count with a different form.
 
      #+begin_src lisp
        (loop for n from 1 to 10
-	     collect n)
+             collect n)
      #+end_src
-
-     #+RESULTS:
-     | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
 
      You can put any Lisp code in the =collect= part of the loop.
 
      #+begin_src lisp
        (loop for n from 1 to 10
-	     collect (+ 100 n))
+             collect (+ 100 n))
      #+end_src
 
-     #+RESULTS:
-     | 101 | 102 | 103 | 104 | 105 | 106 | 107 | 108 | 109 | 110 |
-
-
-     
 **** Preventing Islands
      If a node doesn't receive at least one edge, it is an island (and
      inaccessible to the rest of the map.)
@@ -2664,9 +2624,435 @@ with all of the code I copied during that work.
      going to simply find all islands at the end of generation and
      connect them somewhere.
 
-     #+begin_src lisp
+     We start with the function =direct-edges=, which takes a node and
+     an edge-list and finds all edges in that list that start from
+     that node. We use the =remove-if-not= function for this, which
+     creates a new list only including those members that satisfy the
+     predicate function supplied (we check to see if the node given is
+     in the /car/ of the edge from the list).
+
+     Next, the =get-connected= function, which takes the same
+     arguments: A node and an edge-list. This function builds a list
+     of all nodes connected to the given node in the edge-list, but
+     including those connected through multiple steps.
+
+     The idiomatic way to do this is to create a list of /visited/
+     nodes, and search along all connected nodes. We then continue to
+     search on all of the children of those nodes, etc, etc, until we
+     are done.
+
+     I find myself forgetting that the =labels= function defines local
+     functions. So, we are creating a function inside of
+     =get-connected=. This one is called =traverse=, and it takes a
+     node, and then recurses down as above.
+
+     When this is complete, we'll have a complete list of all
+     connected nodes.
+
+     The =find-islands= function creates another local function using
+     =labels=, with the confusingly similar name of
+     =find-island=. This local function takes a list of nodes, and
+     checks for all nodes connected to the first one in the list,
+     pushing it onto the collector list =islands=.
+
+     It then uses =set-difference= to remove those nodes from the
+     original list of nodes, in a local variable called =unconnected=
+     It recurses until there are no more unconnected, at which point
+     it returns the list =islands=, which is now /a list of the
+     land-masses/, which is something I struggled to conceptualize at
+     first.
+
+     The reason we are pushing all of the /connected/ nodes onto
+     =islands= is so we can figure out how many disparate land masses
+     we have, and connect them.
+
+     Anyway, we use the =let*= function for this, which is like =let=,
+     but for when arguments depend on one another (it does not eval
+     LtR like =let= does).
+
+     Moving on, we need to actually connect these land masses.
+
+     We'll use the =connect-with-bridges= function for this. It takes
+     that list of land masses as its only argument. It first checks to
+     see of there is a =cdr= (meaning more than one land mass). Then
+     it connects the first two land masses together at their first
+     elements (=caar= for the first mass, =caadr= for the second) and
+     calls itself with the =cdr= of the list as its argument (until
+     there isn't one), at whcih point it will return the new list of
+     land masses.
+
+     Finally, we want to compose this into a neat, easy-to-use
+     function, which we'll call =connect-all-islands=. It takes two
+     arguments, a list of nodes and a list of edges, and returns a
+     list with all nodes connected in a single land mass.
+
+     #+begin_src lisp :tangle wumpus.lisp
        (defun direct-edges (node edge-list)
-	 (remove-if-not (lambda (x)
-			  (eql (car x) node))
-			edge-list))
+         (remove-if-not (lambda (x)
+                          (eql (car x) node))
+                        edge-list))
+       (defun get-connected (node edge-list)
+         (let ((visited nil))
+           (labels ((traverse (node)
+                      (unless (member node visited)
+                        (push node visited)
+                        (mapc (lambda (edge)
+                                (traverse (cdr edge)))
+                              (direct-edges node edge-list)))))
+             (traverse node))
+           visited))
+       (defun find-islands (nodes edge-list)
+         (let ((islands nil))
+           (labels ((find-island (nodes)
+                      (let* ((connected (get-connected (car nodes) edge-list))
+                             (unconnected (set-difference nodes connected)))
+                        (push connected islands)
+                        (when unconnected
+                          (find-island unconnected)))))
+             (find-island nodes))
+           islands))
+       (defun connect-with-bridges (islands)
+         (when (cdr islands)
+           (append (edge-pair (caar islands) (caadr islands))
+                   (connect-with-bridges (cdr islands)))))
+       (defun connect-all-islands (nodes edge-list)
+         (append (connect-with-bridges (find-islands nodes edge-list))
+         edge-list))
      #+end_src
+
+**** Building the Final Edges for Congestion City
+     We have a few more notes to hit for edges:
+
+     1. Police Roadblocks.
+     2. Storing Edges as an /alist/.
+     3. Compose into one big function.
+
+
+     By the author's own admission, these are the most cumbersome
+     functions in the game. It's interesting that they were introduced
+     in a block like this, knowing that.
+
+     One interesting thing I immediately note is that the final
+     function (#3 above) is defined first. I was worrying this whole
+     time that this wouldn't be possible, and that my code would have
+     to follow the flow of execution. It seems that is not the case.
+
+     Let's see how well I can walk through this code:
+
+***** =make-city-edges= Analysis
+      The =make-city-edges= function creates three local variables:
+      =nodes=, which is a list of numbers based on our original global
+      variable =*node-num*=. =edge-list=, which is an already-processed
+      list of fully-connected edges. And =cops=, which uses the
+      edge-list and =remove-if-not= again, this time creating a
+      function that tests if a random number based on the global
+      variable =*cop-odds*= comes out to be 0 for each member of
+      =edge-list=. If not, it is removed from the list. Presumably this
+      is why the "1 in X" format was used for the concept of
+      =*cop-odds*=.
+
+      Anyway, with these variables defined, we call both of our
+      yet-to-be-defined functions (=edges-to-alist= and =add-cops=) on
+      the local variable =edge-list=, using =cops= as an additional
+      argument for =add-cops=. This resulting list is returned, as our
+      city's final edges.
+
+***** =edges-to-alist= Analysis
+      Moving on to =edges-to-alist=. It takes one argument, which is
+      the =edge-list= we've been working on up until this point. We
+      then make a few interwoven calls to =mapcar=.
+
+      Let's work from the inside out!
+
+      We use the =direct-edges= function from above to return the list
+      of edges connected to a given node =node1=. This is passed to
+      =remove-duplicates= which ensures each edge only occurs once in
+      the list. We specify that it should use the =equal= function to
+      determine if there is a duplicate.
+
+      This cleaned-up list is the one that will be passed to the first
+      =mapcar= call, which takes each edge pair and turns it into a
+      list of its own, but just containing the node to which the given
+      node =node1= is connected. It returns a list of these
+      single-element lists, like =((20) (23) (28) (25) (5))=. This is
+      passed up the chain to a call to =cons=, which conses it with
+      =node1=. Our list now looks like =(4 (20) (23) (28) (25)
+      (5))=. This is repeated for each edge, using =(car edge)= as
+      =node1= (so, in our example, this is where =4= comes from.
+
+      I have to mention, I only have such detail above because I needed
+      to dive into the repl to figure out what was going on. However,
+      I feel as though I understand all of the above, and I've yet to
+      read the explanation. This is a great sign.
+
+***** =add-cops= Analysis
+      Let's move on to the final function, =add-cops=. Inside-out,
+      again.
+
+      We start by using one of our own functions again, =edge-pair=, on
+      two nodes, =node1= and =node2=. Looking back at the above,
+      =edge-pair= gives us a bi-directional link by returning a list of
+      =((node1 . node2) (node2 . node1))=. We then call a function call
+      =intersection= with that as the first argument, and the =cops=
+      list from =make-city-edges= as the second (so, finding an
+      intersection (?) between the pair and the streets with cops on
+      them.
+
+      Looking up =intersection=, it will return a list of the
+      /intersection/ between the two lists—that is, the parts that
+      occur in both lists.
+
+      So, we are creating all possible edges between the two nodes, and
+      comparing them to the list of edges with cops on them.
+
+      If this isn't =nil= (meaning there /is/ an intersection) we then
+      create a list which is =(node2 'cops)=, presumably an indicator
+      that there are cops on that edge. Otherwise, we return the
+      original value supplied by itself (in this case, it would simply
+      be =(node2)=).
+
+      These results are then passed up the chain to the first =mapcar=,
+      where they are consed with =node1= in an alist. So we can expect
+      something like =(4 (20) (11 'cops) (23))=. That makes sense.
+
+      The rest of the code that I haven't mentioned breaks down each
+      individual pair of the /alist/ given and assigned =node1= to the
+      =car= and =node1-edges= to the =cdr=. So straightforward I almost
+      didn't mention it!
+
+***** Check with the book
+      I'll read through the explanation now, and note anything above
+      that is wrong (and anything I didn't notice)!
+
+      Using =let*= instead of =let= allowed us, in =make-city-edges=,
+      to define local variables based on the values of other local
+      variables.
+
+      Part of the reason the above /alist/ looked odd to me is that it
+      is a /nested alist/. This isn't discussed further here, though I
+      feel it will be elsewhere.
+
+      It seems like my analysis was correct! Woo Hoo!
+
+***** Code and final thoughts
+      #+begin_src lisp :tangle wumpus.lisp
+        (defun make-city-edges ()
+          (let* ((nodes (loop for i from 1 to *node-num*
+                              collect i))
+                 (edge-list (connect-all-islands nodes (make-edge-list)))
+                 (cops (remove-if-not (lambda (x)
+                                        (zerop (random *cop-odds*)))
+                                      edge-list)))
+            (add-cops (edges-to-alist edge-list) cops)))
+        (defun edges-to-alist (edge-list)
+          (mapcar (lambda (node1)
+                    (cons node1
+                          (mapcar (lambda (edge)
+                                    (list (cdr edge)))
+                                  (remove-duplicates (direct-edges node1 edge-list)
+                                                     :test #'equal))))
+                  (remove-duplicates (mapcar #'car edge-list))))
+        (defun add-cops (edge-alist edges-with-cops)
+          (mapcar (lambda (x)
+                    (let ((node1 (car x))
+                          (node1-edges (cdr x)))
+                      (cons node1
+                            (mapcar (lambda (edge)
+                                             (let ((node2 (car edge)))
+                                               (if (intersection (edge-pair node1 node2)
+                                                                 edges-with-cops
+                                                                 :test #'equal)
+                                                   (list node2 'cops)
+                                                   edge)))
+                                      node1-edges))))
+                    edge-alist))
+      #+end_src
+
+
+      The resulting structure should be something like =((1 (2)) (2 (1)
+      (3 COPS)) (3 (2 COPS)))=. We can therefore get a list of all
+      edges for a node by calling =(cdr (assoc node edges))=. We can
+      check for cops using =(cdr (assoc node2 (cdr (assoc node1
+      edges))))=. We're reminded of our graphing libraries again, which
+      we're told will be used shortly. I'm excited.
+
+*** Building the Nodes for Congestion City
+    We can now work on the actual places (nodes) in our city, which
+    can contain:
+
+    - Nothing
+    - The Wumpus
+    - A Glowworm
+    - Blood (clue)
+    - Lights (clue)
+    - Sirens (clue)
+
+
+    Clues are mostly proximity-based, and therefore we need some
+    functions to determine proximity between two nodes. We'll define
+    two nodes as /neighbors/ if they are one node apart. Here's a
+    function that returns a node's neighbors (=neighbors=) and a
+    function that determines whether two nodes are within one node of
+    each other (=within-one=) by seeing if a second node is within
+    that returned list of neighbors.
+
+    #+begin_src lisp :tangle wumpus.lisp
+      (defun neighbors (node edge-alist)
+        (mapcar #'car (cdr (assoc node edge-alist))))
+      (defun within-one (a b edge-alist)
+        (member b (neighbors a edge-alist)))
+    #+end_src
+
+    #+RESULTS:
+    : WITHIN-ONE
+
+    However, we have a clue that works from up to two nodes away (The
+    Blood). So, we need a function that will indicate that, too. That
+    we'll call =within-two=.
+
+    First, it will take two nodes and an edge alist. If =within-one=
+    returns true, we know we are within two (because we are within
+    one) and therefore we return =t=. If not, then we use the =some=
+    function on a =lambda= that compares each of the first node's
+    neighbors to the second node, to see if /they/ are within one node
+    of the second node. The =some= function returns the first value
+    that satisfies the given predicate, and =nil= if otherwise.
+
+    #+begin_src lisp :tangle wumpus.lisp
+      (defun within-two (a b edge-alist)
+        (or (within-one a b edge-alist)
+            (some (lambda (x)
+                    (within-one x b edge-alist))
+                  (neighbors a edge-alist))))
+    #+end_src
+
+    #+RESULTS:
+    : WITHIN-TWO
+
+    These are the full set of utility functions we're going to use to
+    determine clues.
+
+    Time for another huuuuuge function. I'm going to write it out and
+    try to parse it myself before I read anything, as above.
+
+    Okay, so: The only argument is the =edge-alist= from above.
+
+    We then randomly determine where the wumpus is (with no bound) and
+    where the glow worms are (looping up to the number of worms we
+    want, using =*worm-num*=).
+
+    Then, we enter the main construction loop.
+
+    For every node (from 1 to the number of nodes we specified in
+    =*node-num*=) we create a list starting with the node
+    number.
+
+    Then, if the node is where the wumpus is, we put the ='(wumpus)=
+    list in the /cdr/. If it is not the node with the wumpus, but it
+    is within two nodes of the wumpus, we put the ='(blood!)= list in
+    the /cdr/.
+
+    As a separate condition tree, if the node has a glow worm, we put
+    the ='(glow-worm)= list in the /cdr/. If not, but a glow worm is
+    in a neighboring node, we put the ='(lights!)= list instead.
+
+    Finally, as a separate condition, we check to see if there were
+    cops previously places along an edge connecting to the node. If
+    so, we put the ='(sirens!)= list in the /cdr/.
+
+    After looping through all of the nodes, we return the resulting
+    /nested alist/ of nodes and their clues.
+
+    #+begin_src lisp :tangle wumpus.lisp
+      (defun make-city-nodes (edge-alist)
+        (let ((wumpus (random-node))
+              (glow-worms (loop for i below *worm-num*
+                                collect (random-node))))
+          (loop for n from 1 to *node-num*
+                collect (append (list n)
+                                (cond ((eql n wumpus) '(wumpus))
+                                      ((within-two n wumpus edge-alist) '(blood!)))
+                                (cond ((member n glow-worms) '(glow-worm))
+                                      ((some (lambda (worm)
+                                               (within-one n worm edge-alist))
+                                             glow-worms)
+                                       '(lights!)))
+                                (when (some #'cdr (cdr (assoc n edge-alist)))
+                                  '(sirens!))))))
+    #+end_src
+
+    #+RESULTS:
+    : MAKE-CITY-NODES
+
+    Let's see how I did. I'll again only note things I didn't realize
+    myself, and things I got wrong.
+
+    I got everything right! Woo hoo!
+
+*** Initializing a New Game
+    We're going to write a function now that will start a new game by
+    placing all of our elements in the randomized city we generate.
+
+    The process is fairly simple. Store our edges in a global
+    variable, store our nodes (using the generated edges to define
+    them) in another global. Put the player in an empty node. And make
+    that node the only node the player has visited. Then draw the map.
+
+    #+begin_src lisp :tangle wumpus.lisp
+      (defun new-game ()
+        (setf *congestion-city-edges* (make-city-edges))
+        (setf *congestion-city-nodes* (make-city-nodes *congestion-city-edges*))
+        (setf *player-pos* (find-empty-node))
+        (setf *visited-nodes* (list *player-pos*))
+        (draw-city))
+    #+end_src
+
+    #+RESULTS:
+    : NEW-GAME
+
+    Two functions above have yet to be defined: =find-empty-node= and
+    =draw-city=. We'll take care of the former here.
+
+    Our =find-empty-node= function will pick a node and random. Then
+    it will check to see if anything is in that node. If something's
+    there, it recurses until it finds a node that has nothing. And
+    then it returns that.
+
+    #+begin_src lisp :tangle wumpus.lisp
+      (defun find-empty-node ()
+        (let ((x (random-node)))
+          (if (cdr (assoc x *congestion-city-nodes*))
+              (find-empty-node)
+              x)))
+    #+end_src
+
+    #+RESULTS:
+    : FIND-EMPTY-NODE
+
+    It's worth mentioning that there is *no check* to prevent an
+    inifite loop here. If there are no empty nodes in the city, it
+    will loop forever.
+
+*** Drawing a Map of Our City
+    Drawing a map is easy because of our graphing library!
+
+    #+begin_src lisp :tangle wumpus.lisp
+      (defun draw-city ()
+        (ugraph->png "city" *congestion-city-nodes* *congestion-city-edges*))
+    #+end_src
+
+    #+RESULTS:
+    : DRAW-CITY
+
+    Now, to start a new game!
+
+    #+begin_src lisp :tangle wumpus.lisp
+      (new-game)
+    #+end_src
+
+    #+RESULTS:
+    : #<SB-IMPL::PROCESS :EXITED 0>
+
+    [[./city.png]]
+
+**** Drawing a City from Partial Knowledge
