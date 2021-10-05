@@ -2903,9 +2903,6 @@ with all of the code I copied during that work.
         (member b (neighbors a edge-alist)))
     #+end_src
 
-    #+RESULTS:
-    : WITHIN-ONE
-
     However, we have a clue that works from up to two nodes away (The
     Blood). So, we need a function that will indicate that, too. That
     we'll call =within-two=.
@@ -2925,9 +2922,6 @@ with all of the code I copied during that work.
                     (within-one x b edge-alist))
                   (neighbors a edge-alist))))
     #+end_src
-
-    #+RESULTS:
-    : WITHIN-TWO
 
     These are the full set of utility functions we're going to use to
     determine clues.
@@ -2981,9 +2975,6 @@ with all of the code I copied during that work.
                                   '(sirens!))))))
     #+end_src
 
-    #+RESULTS:
-    : MAKE-CITY-NODES
-
     Let's see how I did. I'll again only note things I didn't realize
     myself, and things I got wrong.
 
@@ -3007,9 +2998,6 @@ with all of the code I copied during that work.
         (draw-city))
     #+end_src
 
-    #+RESULTS:
-    : NEW-GAME
-
     Two functions above have yet to be defined: =find-empty-node= and
     =draw-city=. We'll take care of the former here.
 
@@ -3026,9 +3014,6 @@ with all of the code I copied during that work.
               x)))
     #+end_src
 
-    #+RESULTS:
-    : FIND-EMPTY-NODE
-
     It's worth mentioning that there is *no check* to prevent an
     inifite loop here. If there are no empty nodes in the city, it
     will loop forever.
@@ -3041,18 +3026,155 @@ with all of the code I copied during that work.
         (ugraph->png "city" *congestion-city-nodes* *congestion-city-edges*))
     #+end_src
 
-    #+RESULTS:
-    : DRAW-CITY
-
     Now, to start a new game!
+
+    #+begin_src lisp
+      (new-game)
+    #+end_src
+
+    [[./city.png]]
+
+**** Drawing a City from Partial Knowledge
+     Right now, we can see absolutely everything in our city. We need
+     a way to only show the player what they already know, so the game
+     is actually fun.
+
+     We're going to accomplish this by using a global variable named
+     =*visited-nodes*= to track where the player has been.
+
+     First, we'll need a function to build an alist of the known
+     nodes. We'll call that function =known-city-nodes=.
+
+     #+begin_src lisp :tangle wumpus.lisp
+       (defun known-city-nodes ()
+         (mapcar (lambda (node)
+                   (if (member node *visited-nodes*)
+                       (let ((n (assoc node *congestion-city-nodes*)))
+                         (if (eql node *player-pos*)
+                             (append n '(*))
+                             n))
+                       (list node '?)))
+                 (remove-duplicates
+                  (append *visited-nodes*
+                          (mapcan (lambda (node)
+                                    (mapcar #'car
+                                            (cdr (assoc node
+                                                        ,*congestion-city-edges*))))
+                                  ,*visited-nodes*)))))
+     #+end_src
+
+     The most notable part of the above function is the use of
+     =mapcan=, which is a very similar function to =mapcar= but
+     assumes that we are taking a bunch of lists and appending them
+     together for the result, irrespective of their original length(s).
+
+     And then, we need a function to do the same to the edges
+     (=known-city-edges=).
+
+     #+begin_src lisp :tangle wumpus.lisp
+       (defun known-city-edges ()
+         (mapcar (lambda (node)
+                   (cons node (mapcar (lambda (x)
+                                        (if (member (car x) *visited-nodes*)
+                                            x
+                                            (list (car x))))
+                                      (cdr (assoc node *congestion-city-edges*)))))
+                 *visited-nodes*))
+     #+end_src
+
+     #+begin_src lisp :tangle wumpus.lisp
+       (defun draw-known-city()
+         (ugraph->png "known-city" (known-city-nodes) (known-city-edges)))
+     #+end_src
+
+     #+begin_src lisp :tangle wumpus.lisp
+       (defun new-game()
+         (setf *congestion-city-edges* (make-city-edges))
+         (setf *congestion-city-nodes* (make-city-nodes *congestion-city-edges*))
+         (setf *player-pos* (find-empty-node))
+         (setf *visited-nodes* (list *player-pos*))
+         (draw-city)
+         (draw-known-city))
+     #+end_src
+
+     #+begin_src lisp
+       (new-game)
+     #+end_src
+
+     [[file:known-city.png]]
+
+
+*** Walking Around Town
+
+     There are two ways we can walk between parts of our city:
+     Normally, or with the intent to shoot the wumpus. Since these are
+     very similar functions, most of the work will be done in a shared
+     function, called =handle-direction=.
+
+     #+begin_src lisp :tangle wumpus.lisp
+       (defun walk (pos)
+         (handle-direction pos nil))
+       (defun charge (pos)
+         (handle-direction pos t))
+     #+end_src
+
+     =handle-direction= will take two arguments: a position to move to
+     and a flag stating whether this is a =charge=. It will make sure
+     the move is a legal move, and then delegate the actual move to a
+     lower function.
+
+     #+begin_src lisp :tangle wumpus.lisp
+       (defun handle-direction (pos charging)
+         (let ((edge (assoc pos
+                            (cdr (assoc *player-pos* *congestion-city-edges*)))))
+         (if edge
+             (handle-new-place edge pos charging)
+             (princ "That location does not exist!"))))
+     #+end_src
+
+     The lower function that will handle the actual move is going to
+     =handle-new-place=. It's job is to move You to the new location
+     and see what surprises may have befallen You during Your move.
+
+     #+begin_src lisp :tangle wumpus.lisp
+       (defun handle-new-place (edge pos charging)
+         (let* ((node (assoc pos *congestion-city-nodes*))
+                (has-worm (and (member 'glow-worm node)
+                               (not (member pos *visited-nodes*)))))
+           (pushnew pos *visited-nodes*)
+           (setf *player-pos* pos)
+           (draw-known-city)
+           (cond ((member 'cops edge) (princ "You ran into the cops. Game Over."))
+                 ((member 'wumpus node) (if charging
+                                            (princ "You found the Wumpus!")
+                                            (princ "You ran into the Wumpus. Game Over.")))
+                 (charging (princ "You wasted Your last bullet. Game Over."))
+                 (has-worm (let ((new-pos (random-node)))
+                             (princ "You ran into a Glow Worm Gang! You're now at ")
+                             (princ new-pos)
+                             (handle-new-place nil new-pos nil))))))
+
+     #+end_src
+
+
+*** Let's Hunt Some Wumpus!
+    Our game is complete enough to play, now.
 
     #+begin_src lisp :tangle wumpus.lisp
       (new-game)
     #+end_src
 
-    #+RESULTS:
-    : #<SB-IMPL::PROCESS :EXITED 0>
+    [[file:known-city.png]]
 
-    [[./city.png]]
+    #+begin_src lisp
+      (charge 19)
+    #+end_src
 
-**** Drawing a City from Partial Knowledge
+*** What I've Learned
+    - =loop= can loop across many types of data (discussed more in
+      Chapter 10).
+    - The =set-difference= function compares two lists, telling You
+      the exclusive items.
+    - The =intersection= function does the opposite, telling You the
+      items two lists have in common.
+    - The =remove-duplicates= function removes duplicates from a list.
