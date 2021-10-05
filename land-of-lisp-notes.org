@@ -11,8 +11,8 @@
 #+select_tags: export
 #+exclude_tags: noexport
 #+creator: Emacs 28.0.50 (Org mode 9.4.6)
-#+PROPERTY: header-args :results replace verbatim value
-#+PROPERTY: header-args dot :cmd neato
+#+PROPERTY: header-args :results verbatim value replace
+#+PROPERTY: header-args:dot :cmd neato
 These are my notes while working through the LoL book, interpersed
 with all of the code I copied during that work.
 
@@ -936,7 +936,7 @@ with all of the code I copied during that work.
 
     Note however that this is not a limitation of Lisp—You can work
     directly with strings if You prefer (and will be, in Chapter 11).
-    #+begin_src lisp :results value
+    #+begin_src lisp
       (defparameter *nodes* '((living-room (You are in the living-room. A
       wizard is snoring loudly on the couch.))
                              (garden (You are in a beautiful garden. There
@@ -3178,3 +3178,48 @@ with all of the code I copied during that work.
     - The =intersection= function does the opposite, telling You the
       items two lists have in common.
     - The =remove-duplicates= function removes duplicates from a list.
+
+** Chapter 9 - Advanced Datatypes and Generic Programming
+   While many things can be accomplished in Lisp simply through the
+   use of =cons= cells, symbols, strings, and numbers, there are many
+   more datatypes in Lisp.
+
+   
+*** Arrays
+    An /Array/ in Common Lisp is very similar to a list, but allows
+    You to access any specific location's value using a constant
+    amount of time.
+
+    Creating an array is done through =make-array=. Note the syntax
+    =#()=; The leading =#= indicates this is not just a list, but an
+    array.
+
+    #+begin_src lisp
+      (make-array 3)
+    #+end_src
+
+    #+RESULTS:
+    : #(0 0 0)
+
+
+    It's not super-useful to declare an empty array, though, nor one
+    that can't be used. More typical usage would be the following:
+
+    #+begin_src lisp
+      (defparameter x (make-array 3))
+      (setf (aref x 0) 'fiz)
+      (setf (aref x 1) 'foo)
+      (setf (aref x 2) 'bar)
+      (aref x 1)
+    #+end_src
+
+    #+RESULTS:
+    : FOO
+
+    The thing to take away here is the =aref= function: Though it
+    usually /gets/ the value from an array, when used with =setf= in
+    this way it actually /sets/ the value of the array. This is called
+    a /Generic Setter/.
+    
+*** Using a Generic Setter
+    
