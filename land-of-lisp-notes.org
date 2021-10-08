@@ -3183,8 +3183,6 @@ with all of the code I copied during that work.
    While many things can be accomplished in Lisp simply through the
    use of =cons= cells, symbols, strings, and numbers, there are many
    more datatypes in Lisp.
-
-   
 *** Arrays
     An /Array/ in Common Lisp is very similar to a list, but allows
     You to access any specific location's value using a constant
@@ -3220,6 +3218,932 @@ with all of the code I copied during that work.
     usually /gets/ the value from an array, when used with =setf= in
     this way it actually /sets/ the value of the array. This is called
     a /Generic Setter/.
-    
 *** Using a Generic Setter
+    Basically, a /Generic Setter/ is when the code for /getting/ the
+    value of a variable is the same as the code for /setting/ the
+    value of a variable. Lisp /supports Generic Setters/ through tools
+    like =setf=.
     
+    #+begin_src lisp
+      (setf foo '(a b c))
+      (second foo)
+    #+end_src
+
+    #+RESULTS:
+    : B
+
+    So, normally, the =second= function returns the second element
+    from a list, as above. But if You feed that =second= call to
+    =setf=, it figures out /where that value is stored/, and will
+    update it for You.
+
+    #+begin_src lisp
+      (setf (second foo) 'z)
+      (second foo)
+    #+end_src
+
+    #+RESULTS:
+    : Z
+
+    This is possible because the first argument of =setf= is a
+    /Generalized Reference/.
+
+*** Hash Tables
+    /Hash Tables/ are to /alists/ as /arrays/ are to /lists/.
+
+    They are so efficient that they can seem magical. Most languages
+    outside of the lisp world now offer hash tables in some way, too.
+*** Working with Hash Tables
+    You can create a new hash table with =make-hash-table=. Note the
+    =#S= prefix; that indicates that it is a hash table. Actually,
+    don't note that, because I got different output.
+
+    #+begin_src lisp
+      (make-hash-table)
+    #+end_src
+
+    #+RESULTS:
+    : #<HASH-TABLE :TEST EQL :COUNT 0 {100478CB23}>
+
+    Let's set up a variable hash table; maybe then it will show the
+    =#S= marking.
+
+    #+begin_src lisp
+      (defparameter x (make-hash-table))
+      (print x)
+    #+end_src
+
+    #+RESULTS:
+    : #<HASH-TABLE :TEST EQL :COUNT 0 {10047F2E03}>
+
+    Nope, it seems as though that is not in =sbcl=. Let's move on, see
+    if it changes as we learn more.
+
+    If we try to get the value of a key that is not present in the
+    table, we instead get =NIL=. We actually get two =NIL= values: one
+    for the value found (which, nothing was) and one for whether the
+    /key/ was found (it was not).
+
+    #+begin_src lisp
+      (gethash 'yup x)
+    #+end_src
+
+    #+RESULTS:
+    : NIL
+    : NIL
+
+    We can use the =gethash= command as a generalized reference to add
+    items to our table, as well.
+
+    #+begin_src lisp
+      (setf (gethash 'yup x) 25)
+      (gethash 'yup x)
+    #+end_src
+
+    #+RESULTS:
+    : 25
+    : T
+
+    Note the 25 (the value found) and the =T= (whether the key was
+    found).
+
+    We can easily make a hash table of arbitrary size, this way.
+
+    #+begin_src lisp
+      (defparameter *drink-order* (make-hash-table))
+      (setf (gethash 'bill *drink-order*) 'double-espresso)
+      (setf (gethash 'lisa *drink-order*) 'small-drip-coffee)
+      (setf (gethash 'john *drink-order*) 'medium-latte)
+      (gethash 'lisa *drink-order*)
+    #+end_src
+
+    #+RESULTS:
+    : SMALL-DRIP-COFFEE
+    : T
+*** Returning Multiple Values
+    *Common Lisp allows you to return more than one value as a
+    result*. We've seen =gethash= above. =round= is another function
+    that does this; It rounds a number and returns it, and then
+    returns the remainder of the rounding operation.
+
+    #+begin_src lisp
+      (round 2.4)
+    #+end_src
+
+    #+RESULTS:
+    : 2
+    : 0.4000001
+
+    You can do the same thing in Your own code with the =values=
+    function.
+
+    #+begin_src lisp
+      (defun foo ()
+        (values 3 7))
+      (foo)
+    #+end_src
+
+    #+RESULTS:
+    : 3
+    : 7
+
+    The second value will be ignored by a lot of the functions You
+    use; It will not impact the functionality of things at all from
+    that perspective. Note that the following results in 8, because
+    the 3 is used, and the 7 is ignored.
+
+    #+begin_src lisp
+      (+ (foo) 5)
+    #+end_src
+
+    #+RESULTS:
+    : 8
+
+    Of course, there's a way to get around this as well, with the
+    function =multiple-value-bind=. It allows You to bind the values
+    of
+
+    #+begin_src lisp
+      (multiple-value-bind (a b) (foo)
+        (* a b))
+    #+end_src
+
+    #+RESULTS:
+    : 21
+
+    Many more recent Lisp Dialects don't support this
+    feature. However, it can lead to more optimized, cleaner code, and
+    is something You should remember is a possible alternative to
+    simply returning a list of results.
+*** Hash Table Performance    Just like arrays, accessing/modifying a hash table value happens
+    with a constant time, no matter how big the hash table is.
+
+    However, there are some features of hash tables and situations
+    where the performance of hash tables might be less than optimal.
+**** Virtual Memory Paging and Cache Misses
+     Large Hash Tables or Arrays can cause Your system to start
+     swapping, which is not great for performance. Similarly, Cache
+     Misses (and thus, main-memory calls with greater latency) can be
+     increased with large arrays or hash-tables.
+**** Hash Collisions
+     I'm familiar with these. The hash that lets a hash-table work
+     comes from a function, and that function can sometimes produce
+     the same result for two values. If this happens, performance is
+     impacted. If it happens /enough/, the lookup with fail.
+**** Inefficiency with Small Tables
+     Smaller sets of data actually /benefit/ from the use of an
+     alist. The overhead introduced by using the much more complex
+     hash table is too much to make it worth it.
+**** Varying Speed for Operations
+     While /lookups/ are constant, /insertions/ are optimized for
+     small tables. Occasionally there will be a laggy insertion if the
+     table is big enough.
+**** Final Reason
+     Hash tables are not Lispy. They are an optimization choice, not
+     something to use when debugging a concept or hacking. Same goes
+     for arrays: Use them to make Your program better, not to write
+     Your program from the offset.
+*** TODO A Faster Grand Theft Wumpus with Hash Tables
+    :LOGBOOK:
+    - State "TODO"       from              [2021-10-08 Fri 00:58]
+    :END:
+    I am so tired of this project that I am skipping this for now.
+*** Common Lisp Structures
+    A /structure/ is an object with one or more /slots/, which allows
+    for a uniform structure to the data You are working with.
+
+    #+begin_src lisp
+      (defstruct person
+        name
+        age
+        waist-size
+        favorite-color)
+    #+end_src
+
+    #+RESULTS:
+    : PERSON
+
+    The =defstruct= command has a few nice benefits to manually
+    building something like it by hand, or without an object: First,
+    it creates some of the otherwise repetetive functions for You:
+    =make-object= is the constructor, =object-slot= are the
+    getters/setters, etc.
+
+    #+begin_src lisp
+      (defparameter *bob* (make-person :name "Bob"
+                                       :age 35
+                                       :waist-size 32
+                                       :favorite-color "blue"))
+      (person-age *bob*)
+      (setf (person-age *bob*) 36)
+      (person-age *bob*)
+      *bob*
+    #+end_src
+
+    #+RESULTS:
+    : #S(PERSON :NAME "Bob" :AGE 36 :WAIST-SIZE 32 :FAVORITE-COLOR "blue")
+
+    Note the =#S= prefix; this indicates a structure.
+
+    Also note that we do not /need/ to use the constructor function;
+    We can specify a structure in the form of the printed
+    representation, too:
+
+    #+begin_src lisp
+      (defparameter *george* #S(person :name "George"
+                                       :age 38
+                                       :waist-size 36
+                                       :favorite-color "black"))
+      (person-age *george*)
+    #+end_src
+
+    #+RESULTS:
+    : 38
+*** When to Use Structures
+    OOP is very popular, but not as ubiquitous in the Lisp
+    world. Higher-order Functional and Domain Specific Language
+    programming are alternative styles that are common in Lisp.
+
+    That said, using structures is not limited to programming in an
+    OOP style. While You /can/ get by without them (by using lists),
+    there are drawbacks:
+
+    1. You'll need to write a lot of otherwise-standard functions for
+       manipulating Your data.
+    2. Looking at the raw data is not as understandable, since the
+       slot names are absent.
+    3. /Mutation/ (making data change over time) is much more
+       difficult and error prone without a structure to lean on.
+*** CLOS
+    There is a Common Lisp Object System in Common Lisp, which is
+    touted as being very sophisticated, and is mentioned here. I doubt
+    we'll go into it much in this book, but it's worth noting it was
+    mentioned.
+*** Handling Data in a Generic Way
+    With all of these datatypes (and more) available, it's easy to
+    write ugly, repetitive code when haphazardly dealing with
+    them. The Common Lisp solution for this is handling data in a
+    generic way, using /generic library functions/, /type predicates/,
+    /defmethod/, and /generic accessors/.
+*** Working with Sequences
+    The /Sequence Functions/ work generically across the three main
+    ways of sequencing data in Lisp (lists, arrays, and
+    strings). Without the generic =length= function, we would need 3
+    functions to determine the length of these three structures.
+
+    #+begin_src lisp :results output
+      (print (length '(a b c)))
+      (print (length "blub"))
+      (print (length (make-array 5)))
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : 3 
+    : 4 
+    : 5 
+
+    It's worth noting we have =list-length=, which is a =length=
+    function that only works on lists. This is a performance-related
+    function, that takes out the code that checks for the other
+    structures of data. It's unneeded outside of optimization;
+    =length= will work everywhere it will work.
+*** Sequence Functions for Searching
+    Some of the /sequence functions/ search sequences:
+
+    - =find-if= finds the first value in a sequence that satisfies a
+      predicate.
+    - =count= determines the number of times an object appears in a
+      sequence.
+    - =position= tells where a specific item is stored (presumably the
+      first instance).
+    - =some= determines whether any value in a sequence satisfies a
+      predicate.
+    - =every= determines whether every value in a sequence satisfies a
+      predicate.
+*** Sequence Functions for Iterating
+    I am familiar with both of these, as they are used extensively in
+    clojure.
+**** =reduce=
+     The =reduce= function iterates through a sequence and returns a
+     single result.
+
+     #+begin_src lisp
+       (reduce #'+ '(3 4 6 5 2))
+     #+end_src
+
+     #+RESULTS:
+     : 20
+
+     Here's a more complex example, using an anonymous function and a
+     parameter, =:initial-value=. Setting an explicit initial value
+     like this is important, because otherwise =reduce= will use the
+     first items in our sequence to fill all the arguments in our
+     function. In this case, it would return 7—the largest number in
+     our sequence, and the first number (so it would be used as the
+     initial value for our =best= argument, and never be checked
+     itself—instead of 6.
+
+     #+begin_src lisp
+       (reduce (lambda (best item)
+                 (if (and (evenp item)
+                          (> item best))
+                     item
+                     best))
+               '(7 4 6 5 2)
+               :initial-value 0)
+     #+end_src
+
+     #+RESULTS:
+     : 6
+
+     While =reduce= is generic across all sequences, the functions
+     handed to =reduce= do not have to be:
+
+     #+begin_src lisp
+       (defun sum (lst)
+         (reduce #'+ lst))
+     #+end_src
+
+     #+RESULTS:
+     : SUM
+
+     This =sum= function will work for all sequences that have numbers
+     in them. However, it will give You a type error if any characters
+     are in the sequence. This means strings don't work at all, and
+     some arrays and lists won't either.
+
+     #+begin_src lisp :results output
+       (print (sum '(1 2 3)))
+       (print (sum (make-array 5 :initial-contents '(1 2 3 4 5))))
+     #+end_src
+
+     #+RESULTS:
+     : 
+     : 6 
+     : 15 
+
+**** =map=
+     Map works as I expect it to, with the wrinkle that the return
+     type be specified as the first argument.
+
+     #+begin_src lisp
+       (map 'string (lambda (x)
+                      (if (eq x #\c)
+                          #\C
+                          x))
+            "My name is christopher.")
+     #+end_src
+
+     #+RESULTS:
+     : My name is Christopher.
+
+*** Two More Important Sequence Functions
+    The =subseq= function slices the sequence using start and end
+    points. And the =sort= function lets You pass a function to sort
+    the sequence by.
+
+    #+begin_src lisp
+      (subseq "Tarot" 0 3)
+    #+end_src
+
+    #+RESULTS:
+    : Tar
+
+    #+begin_src lisp
+      (sort '(5 8 2 4 9 3 6) #'<)
+    #+end_src
+
+    #+RESULTS:
+    : (2 3 4 5 6 8 9)
+
+    There are many more /sequence functions/, but these are a good
+    starting point.
+
+*** Creating Your Own Generic Functions with Type Predicates
+    As Common Lisp (and most others) are dynamically typed, any
+    variable or parameter can hold any kind of data, and the type of
+    data might change over time.
+
+    This is why we have /type predicates/, which are predicates that
+    check the type of data referenced somewhere.
+
+    #+begin_src lisp
+      (numberp 5)
+    #+end_src
+
+    #+RESULTS:
+    : T
+
+    You can use these to create functions that handle many types of
+    data generically. We'll do that now, creating an =add= function
+    that takes two arguments. It will append one to the other if they
+    are lists, and it will add them together if they are numbers.
+
+    #+begin_src lisp :results output
+      (defun add (a b)
+        (cond ((and (numberp a) (numberp b)) (+ a b))
+              ((and (listp a) (listp b)) (append a b))))
+      (print (add 3 4))
+      (print (add '(a b) '(c d)))
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : 7 
+    : (A B C D) 
+
+    While this works, it is not the way most Lispers would write this
+    function this way. There are four reasons.
+
+**** A Single, Monolithic Function for All Types
+     This is fine for two types, but how about two hundred? It would
+     turn to spaghetti very quickly, especially when You consider the
+     possibility of mismatched types.
+**** Modifications Required to Accommodate New Cases
+     If You need to support a new type, You need to edit the
+     originally defined function, possibly breaking old code. The
+     chance for this goes up with complexity.
+**** Hard to Understand
+     As everything relies on a single =cond= statement, it is easy to
+     misunderstand what the code is doing. As the =cond= grows, this
+     confusion will too.
+**** Performance
+     The interpreter (or compiler) cannot optimize the code at all, as
+     it is unknown what types of data will be used and in what way to
+     it.
+*** Creating Your Own Generic Functions with =defmethod=
+    As an alternative to the above, consider this:
+
+    #+begin_src lisp :results output
+      (defmethod ad ((a number) (b number))
+        (+ a b))
+      (defmethod ad ((a list) (b list))
+        (append a b))
+      (print (add 3 4))
+      (print (add '(a b) '(c d)))
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : 7 
+    : (A B C D) 
+
+    This addresses nearly all of the points above using something
+    called /type dispatching/: Having the compiler or interpreter
+    choose different versions of a function based on argument
+    types. It keeps each version of a function totally separate,
+    allows the optimization to occur as it would for simple functions,
+    is very readable and even more so extendable—all without touching
+    working code!
+
+    The biggest differences between =defmethod= and =defun= are that
+    =defmethod= supports /type dispatching/ and it allows You to
+    specify which types of data Your function expects in its
+    arguments.
+
+    We're going to approach our next game from a more OOP point of
+    view, apparently.
+*** Orc Battle
+**** Concept
+     In /Orc Battle/, You are a knight surrounded by 12 monsters. You
+     must kill them all before You are worn down by their superior
+     numbers.
+**** Global Variables for the Player and Monsters
+     We need to track three stats for the player: health, agility, and
+     strength. If a player's health reaches zero, the player
+     dies. Agility controls the number of attacks a player gets each
+     round. And strength controls the damage of those attacks. They
+     will change as the game progresses.
+
+     #+begin_src lisp :tangle orc-battle.lisp
+       (defparameter *player-health* nil)
+       (defparameter *player-agility* nil)
+       (defparameter *player-strength* nil)
+     #+end_src
+
+     #+RESULTS:
+     : *PLAYER-STRENGTH*
+
+     As for monsters: We'll store all of our monsters in a global
+     array. We'll also make builder functions for each monster, to aid
+     in generating random monsters. And we'll control the difficulty
+     by specifying the number of monsters.
+
+     #+begin_src lisp :tangle orc-battle.lisp
+       (defparameter *monsters* nil)
+       (defparameter *monster-builders* nil)
+       (defparameter *monster-num* 12)
+     #+end_src
+
+     #+RESULTS:
+     : *MONSTER-NUM*
+**** Main Game Functions
+     We're starting with the big picture this time, instead of working
+     up from a small feature.
+
+     When we start our game, we need to initialize both the monsters
+     and the player, and then We're going to enter a game loop. When
+     that game loop terminates, either the player or the monsters will
+     be dead (or the game will have been interrupted, in which case it
+     doesn't matter). We'll display appropriate messages in each case.
+
+     #+begin_src lisp :tangle orc-battle.lisp
+       (defun orc-battle ()
+         (init-monsters)
+         (init-player)
+         (game-loop)
+         (when (player-dead)
+           (princ "You have been killed. Game Over."))
+         (when (monsters-dead)
+           (princ "Congratulations! You have vanquished all of Your foes!")))
+     #+end_src
+
+     #+RESULTS:
+     : ORC-BATTLE
+
+     Next, we need to define the =game-loop= function. It will
+     terminate only when either the player is dead or the monsters are
+     dead. First, we want it to update the player. Then, we will
+     repeat a loop of "update monsters and let the player attack" a
+     number of times based on their agility.
+
+     After that, we will ensure we are on a new line, and all the
+     alive monsters will attack (and the dead ones will be marked as
+     dead). Then, we will recurse, and start the whole thing over.
+
+     #+begin_src lisp :tangle orc-battle.lisp
+       (defun game-loop()
+         (unless (or (player-dead) (monsters-dead))
+           (show-player)
+           (dotimes (k (1+ (truncate (/ (max 0 *player-agility*) 15))))
+             (unless (monsters-dead)
+               (show-monsters)
+               (player-attack)))
+           (fresh-line)
+           (map 'list
+                (lambda (m)
+                  (or (monster-dead m) (monster-attack m)))
+                ,*monsters*)
+           (game-loop)))
+     #+end_src
+
+     #+RESULTS:
+     : GAME-LOOP
+**** Player Management Functions
+     First, some simple functions: =init-player= initialized the
+     player at the default starting stats. =player-dead= checks if the
+     player has died. And =show-player= prints out the player's
+     current status.
+
+     #+begin_src lisp :tangle orc-battle.lisp
+       (defun init-player ()
+         (setf *player-health* 30)
+         (setf *player-agility* 30)
+         (setf *player-strength* 30))
+       (defun player-dead ()
+         (<= *player-health* 0))
+       (defun show-player ()
+         (fresh-line)
+         (princ "You are a valiant knight with a health of ")
+         (princ *player-health*)
+         (princ ", an agility of ")
+         (princ *player-agility*)
+         (princ ", and a strength of ")
+         (princ *player-strength*)
+         (princ "."))
+     #+end_src
+
+     #+RESULTS:
+     : SHOW-PLAYER
+
+     We then need a function to manage the player's attack. It will go
+     to a fresh line, and ask the player for the type of attack
+     (expecting a single letter response). It will then let the player
+     pick a monster, and apply the damage to them. If I were writing
+     this myself, I would separate out each attack into its own
+     function, and probably not default to a specific type (choosing
+     instead to re-ask the player). But I am not, this is for
+     learning.
+
+     #+begin_src lisp :tangle orc-battle.lisp
+       (defun player-attack ()
+         (fresh-line)
+         (princ "Attack Style: [s]tab [d]ouble-swing [r]oundhouse:")
+         (case (read)
+           (s (monster-hit (pick-monster)
+                          (+ 2 (randval (ash *player-strength* -1)))))
+           (d (let ((x (randval (truncate (/ *player-strength* 6)))))
+                (princ "Your double-swing has a strength of ")
+                (princ x)
+                (princ ".")
+                (fresh-line)
+                (monster-hit (pick-monster) x)
+                (unless (monsters-dead)
+                  (monster-hit (pick-monster) x))))
+           (otherwise (dotimes (x (1+ (randval (truncate (/ *player-strength* 3)))))
+                        (unless (monsters-dead)
+                          (monster-hit (random-monster) 1))))))
+     #+end_src
+
+     #+RESULTS:
+     : PLAYER-ATTACK
+**** Helper Functions for Player Attacks
+     We need a few functions to support our player attacks. =randval=
+     will pick a random number of at least 1 and return
+     it. =random-monster= will select a random, alive monster to
+     attack (for the roundhouse). And =pick-monster= will let the
+     player pick a monster instead.
+
+     #+begin_src lisp :tangle orc-battle.lisp
+       (defun randval (n)
+         (1+ (random (max 1 n))))
+       (defun random-monster ()
+         (let ((m (aref *monsters* (random (length *monsters*)))))
+           (if (monster-dead m)
+               (random-monster)
+               m)))
+       (defun pick-monster ()
+         (fresh-line)
+         (princ "Monster #:")
+         (let ((x (read)))
+           (if (not (and (integerp x) (>= x 1) (<= x *monster-num*)))
+               (progn (princ "That is not a valid monster number.")
+                      (pick-monster))
+               (let ((m (aref *monsters* (1- x))))
+                 (if (monster-dead m)
+                     (progn (princ "That monster is already dead.")
+                            (pick-monster))
+                     m)))))
+     #+end_src
+
+     #+RESULTS:
+     : PICK-MONSTER
+**** Monster Management Functions
+     Initializing the monsters is simple: We will pull =*monster-num*=
+     functions out of =*monster-builders*= and call them, putting the
+     results into an array of size =*monster-num*= and then storing
+     that array in =*monsters*=.
+
+     #+begin_src lisp :tangle orc-battle.lisp
+       (defun init-monsters ()
+         (setf *monsters*
+               (map 'vector
+                    (lambda (x)
+                      (funcall (nth (random (length *monster-builders*))
+                                    ,*monster-builders*)))
+                    (make-array *monster-num*))))
+     #+end_src
+
+     #+RESULTS:
+     : INIT-MONSTERS
+
+     Next, we need our simple helper functions: =monster-dead= will
+     tell if a monster is dead, =monsters-dead= will then use that
+     function to check if /all/ monsters are dead, and =show-monsters=
+     will print a listing of all of the monsters.
+
+     #+begin_src lisp :tangle orc-battle.lisp
+       (defun monster-dead (m)
+         (<= (monster-health m) 0))
+       (defun monsters-dead ()
+         (every #'monster-dead *monsters*))
+       (defun show-monsters ()
+         (fresh-line)
+         (princ "Your foes:")
+         (let ((x 0))
+           (map 'list
+                (lambda (m)
+                  (fresh-line)
+                  (princ "   ")
+                  (princ (incf x))
+                  (princ ". ")
+                  (if (monster-dead m)
+                      (princ "**dead**")
+                      (progn (princ "(Health=")
+                             (princ (monster-health m))
+                             (princ ") ")
+                             (monster-show m))))
+                *monsters*)))
+     #+end_src
+
+     #+RESULTS:
+     : SHOW-MONSTERS
+**** The Monsters
+***** The Generic Monster
+      We're going to start with a generic monster, and work our way
+      out from there.
+
+      The LCD for monsters is the health meter. Every Monster will
+      have one. We're going to take advantage of a special feature: We
+      can define default values for /slots/ using arbitrary forms!
+
+      #+begin_src lisp :tangle orc-battle.lisp
+        (defstruct monster (health (randval 10)))
+      #+end_src
+
+      #+RESULTS:
+      : MONSTER
+
+      If we try using the constructor =make-monster=, we see that the
+      health is different every time.
+
+      #+begin_src lisp
+        (make-monster)
+      #+end_src
+
+      #+RESULTS:
+      : #S(MONSTER :HEALTH 5)
+
+      We also need a function to decrease a monster's health when
+      attacked. We'll call that function =monster-hit=. It'll print a
+      message, too, but we'll define it with =defmethod= so that we
+      can print specific messages for various monsters.
+
+      #+begin_src lisp :tangle orc-battle.lisp
+        (defmethod monster-hit (m x)
+          (decf (monster-health m) x)
+          (if (monster-dead m)
+              (progn (princ "You killed the ")
+                     (princ (type-of m))
+                     (princ "! "))
+              (progn (princ "You hit the ")
+                     (princ (type-of m))
+                     (princ ", knocking off ")
+                     (princ x)
+                     (princ " health points! "))))
+      #+end_src
+
+      #+RESULTS:
+      : #<STANDARD-METHOD COMMON-LISP-USER::MONSTER-HIT (T T) {10071DDFA3}>
+
+      We also need two more smaller functions: =monster-show= and
+      =monster-attack=. The former will be very simple, since it might
+      be written over by a future (real) monster. The latter is empty;
+      simply a placeholder since each monster will have a unique
+      attack.
+
+      #+begin_src lisp :tangle orc-battle.lisp
+        (defmethod monster-show (m)
+          (princ "A fierce ")
+          (princ (type-of m))
+          (princ ". "))
+        (defmethod monster-attack (m))
+      #+end_src
+
+      #+RESULTS:
+      : #<STANDARD-METHOD COMMON-LISP-USER::MONSTER-ATTACK (T) {1007286303}>
+***** The Wicked Orc
+      Orcs are simple: Strong, variable-strength club attack.
+
+      We make the orc type using =defstruct=, using a feature that
+      includes all of the fields of another type (our generic monster
+      class. We just need to add a club-level, which will be
+      orc-specific. And then we'll push the constructor onto
+      =*monster-builders*=.
+
+      #+begin_src lisp :tangle orc-battle.lisp
+        (defstruct (orc (:include monster)) (club-level (randval 8)))
+        (push #'make-orc *monster-builders*)
+      #+end_src
+
+      #+RESULTS:
+      : (#<FUNCTION MAKE-ORC>)
+
+      Note how simple the approach is: No matter how many monsters we
+      add, we will never need to change our basic Orc Battle
+      code. This is only possible in languages like Lisp, with
+      dynamically typed variables and first-class functions.
+
+      We'll now specialize =monster-show= and =monster-attack= for use
+      with orcs.
+
+      #+begin_src lisp :tangle orc-battle.lisp
+        (defmethod monster-show ((m orc))
+          (princ "A wicked orc with a level ")
+          (princ (orc-club-level m))
+          (princ " club."))
+        (defmethod monster-attack ((m orc))
+          (let ((x (randval (orc-club-level m))))
+            (princ "An orc swings at You and knocks off ")
+            (princ x)
+            (princ " of Your health points. ")
+            (decf *player-health* x)))
+      #+end_src
+
+      #+RESULTS:
+      : #<STANDARD-METHOD COMMON-LISP-USER::MONSTER-ATTACK (ORC) {100404D743}>
+***** The Malicious Hydra
+      The hydra attacks with its heads, grows heads back each round,
+      and should be dealt with quickly.
+
+      #+begin_src lisp :tangle orc-battle.lisp
+        (defstruct (hydra (:include monster)))
+        (push #'make-hydra *monster-builders*)
+      #+end_src
+
+      #+RESULTS:
+      : (#<FUNCTION MAKE-HYDRA> #<FUNCTION MAKE-ORC>)
+
+     The hydra's health /is/ its number of heads. So, the healthier it
+     is, the more damage it does. And it heals 1 HP each turn.
+
+     #+begin_src lisp :tangle orc-battle.lisp
+       (defmethod monster-show ((m hydra))
+         (princ "A malicious hydra with ")
+         (princ (monster-health m))
+         (princ " heads."))
+       (defmethod monster-hit ((m hydra) x)
+         (decf (monster-health m) x)
+         (if (monster-dead m)
+             (princ "The corpse of the fully decapitated and decapacitated hydra falls to the floor!")
+             (progn (princ "You lop off ")
+                    (princ x)
+                    (princ " of the hydra's heads! "))))
+       (defmethod monster-attack ((m hydra))
+         (let ((x (randval (ash (monster-health m) -1))))
+           (princ "A hydra attacks You with ")
+           (princ x)
+           (princ " of its heads! It also grows back one more head! ")
+           (incf (monster-health m))
+           (decf *player-health* x)))
+     #+end_src
+
+     #+RESULTS:
+     : #<STANDARD-METHOD COMMON-LISP-USER::MONSTER-ATTACK (HYDRA) {100434AA83}>
+***** The Slimy Slime Mold
+      This monster attacks Your agility by wrapping around Your legs
+      and squirting goo in Your face.
+
+      #+begin_src lisp :tangle orc-battle.lisp
+        (defstruct (slime-mold (:include monster)) (sliminess (randval 5)))
+        (push #'make-slime-mold *monster-builders*)
+      #+end_src
+
+      #+RESULTS:
+      : (#<FUNCTION MAKE-SLIME-MOLD> #<FUNCTION MAKE-HYDRA> #<FUNCTION MAKE-ORC>)
+
+      The main feature is the agility damage, but there is also a 50%
+      chance it will do 1 HP of damage (squirting goo) to the player
+      as well, to prevent softlocking.
+
+      #+begin_src lisp :tangle orc-battle.lisp
+        (defmethod monster-show ((m slime-mold))
+          (princ "A slime mold with a sliminess of ")
+          (princ (slime-mold-sliminess m))
+          (princ ". "))
+        (defmethod monster-attack ((m slime-mold))
+          (let ((x (randval (slime-mold-sliminess m))))
+            (princ "A slime mold wraps around Your legs and decreases Your agility by ")
+            (princ x)
+            (princ "! ")
+            (decf *player-agility* x)
+            (when (zerop (random 2))
+              (princ "It also squirts in Your face, taking away a health point! ")
+              (decf *player-health*))))
+      #+end_src
+
+      #+RESULTS:
+      : #<STANDARD-METHOD COMMON-LISP-USER::MONSTER-ATTACK (SLIME-MOLD) {1004687213}>
+***** The Cunning Brigand
+      The smartest monster who attacks Your currently-best attribute.
+
+      #+begin_src lisp :tangle orc-battle.lisp
+        (defstruct (brigand (:include monster)))
+        (push #'make-brigand *monster-builders*)
+      #+end_src
+
+      #+RESULTS:
+      : (#<FUNCTION MAKE-BRIGAND> #<FUNCTION MAKE-SLIME-MOLD> #<FUNCTION MAKE-HYDRA>
+      :  #<FUNCTION MAKE-ORC>)
+
+      The brigand won't get a special show or hit function, but will
+      have a fairly complex attack function.
+
+      #+begin_src lisp :tangle orc-battle.lisp
+        (defmethod monster-attack ((m brigand))
+          (let ((x (max *player-health* *player-agility* *player-strength*)))
+            (cond ((= x *player-health*)
+                   (princ "A brigand hits You with their slingshot, taking off 2 health points! ")
+                   (decf *player-health* 2))
+                  ((= x *player-agility*)
+                   (princ "A brigand catches Your leg with their whip, taking off 2 agility points! ")
+                   (decf *player-agility* 2))
+                  ((= x *player-strength*)
+                   (princ "A brigand cuts Your arm with their whip, taking off 2 strength points! ")
+                   (decf *player-strength* 2)))))
+      #+end_src
+
+      #+RESULTS:
+      : #<STANDARD-METHOD COMMON-LISP-USER::MONSTER-ATTACK (BRIGAND) {10049022D3}>
+**** To Battle!
+     The game is now playable! But needs to be played in a REPL. Just
+     call the =(orc-battle)= function.
+*** What I've Learned
+    - Arrays are similar to lists, but more efficient and less Lispy.
+    - Hash Tables are ditto to alists.
+    - Both will make Your code faster.
+    - The =time= command will tell You if it made a difference.
+    - Common Lisp a Generic Functions. We learned about the Sequence ones.
+    - You can use =defstruct= to make objects with slots.
+* Part III - Lisp is Hacking
