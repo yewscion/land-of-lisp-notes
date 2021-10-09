@@ -4147,3 +4147,383 @@ with all of the code I copied during that work.
     - Common Lisp a Generic Functions. We learned about the Sequence ones.
     - You can use =defstruct= to make objects with slots.
 * Part III - Lisp is Hacking
+** =loop= and =format=: The Seedy Underbelly of Lisp
+*** Intro
+    =loop= and =format= are extensions to the much purer Lisp Core,
+    but they are two extensions that have stood the test of time and
+    can confer great power in their use. However, some Lispers feel
+    You should not use them in any really serious code due to their
+    complexity.
+** Chapter 10: Looping with the =loop= command
+   Though most of the functionality =loop= and =format= offer is
+   available elsewhere, they are both good for writing terse code.
+*** The =loop= macro
+    The first macro we are going over in this section is =loop=. It
+    can do basically any kind of looping You could want.
+
+    #+begin_src lisp
+      (loop for i
+            below 5
+            sum i)
+    #+end_src
+
+    #+RESULTS:
+    : 10
+
+    This is, obviously, not a very lispy way to do such a thing,
+    however. There are 7 tokens in a row, and 3 of them have special
+    rules that break the symmetry expected in lisp forms:
+
+    - =for= declares a variable that changes each iteration.
+    - =below= is a constraint for that variable (stop at 5,
+      exclusively).
+    - =sum= adds together the number from each iteration, the sum of
+      which will be returned by =loop=.
+*** Some =loop= Tricks
+    There are a /lot/ of possibilities in =loop=.
+**** Counting from a Starting Point to an Ending Point
+     The =from= and =to= clauses control starting and ending points.
+
+     #+begin_src lisp
+       (loop for i
+             from 5
+             to 10
+             sum i)
+     #+end_src
+
+     #+RESULTS:
+     : 45
+
+**** Iterating Through Values in a List
+     The =in= token lets You specify the data set.
+
+     #+begin_src lisp
+       (loop for i
+             in '(100 20 3)
+             sum i)
+     #+end_src
+
+     #+RESULTS:
+     : 123
+
+**** =doing= Stuff in a Loop
+     The =do= token takes an arbitrary form any executes it within the
+     loop.
+
+     #+begin_src lisp :results output
+       (loop for i
+             below 5
+             do (print i))
+     #+end_src
+
+     #+RESULTS:
+     : 
+     : 0 
+     : 1 
+     : 2 
+     : 3 
+     : 4 
+**** Doing Stuff Under Certain Conditions
+     The =when= token only runs when a predicate is true.
+
+     #+begin_src lisp
+       (loop for i
+             below 10
+             when (oddp i)
+               sum i)
+     #+end_src
+
+     #+RESULTS:
+     : 25
+
+**** Breaking Out of a Loop Early
+     Notice we have no upper bound here, only a condition =when= that
+     leads to a =return=.
+
+     #+begin_src lisp
+       (loop for i
+             from 0
+             do (print i)
+                when (= i 5)
+                  return 'falafel)
+     #+end_src
+
+     #+RESULTS:
+     : FALAFEL
+
+**** Collecting a List of Values
+     The =collect= token builds a list from the results of a function
+     in each iteration. Useful for transforming each member of a list.
+
+     #+begin_src lisp
+       (loop for i
+             in '(2 3 4 5 6)
+             collect (* i i))
+     #+end_src
+
+     #+RESULTS:
+     : (4 9 16 25 36)
+
+**** Using Multiple =for= Clauses
+     You can use more than one =for= token, too. Note, however, that
+     the variables iterate in tandem, not separately.
+
+     #+begin_src lisp
+       (loop for x below 10
+             for y below 10
+             collect (+ x y))
+     #+end_src
+
+     #+RESULTS:
+     : (0 2 4 6 8 10 12 14 16 18)
+
+     To get the other kind of result, called a /Cartesian Product/, we
+     need to use /nested =loop= statements/.
+
+     #+begin_src lisp
+       (loop for x below 10
+             collect (loop for y below 10
+                           collect (+ x y)))
+     #+end_src
+
+     #+RESULTS:
+     : ((0 1 2 3 4 5 6 7 8 9) (1 2 3 4 5 6 7 8 9 10) (2 3 4 5 6 7 8 9 10 11)
+     :  (3 4 5 6 7 8 9 10 11 12) (4 5 6 7 8 9 10 11 12 13) (5 6 7 8 9 10 11 12 13 14)
+     :  (6 7 8 9 10 11 12 13 14 15) (7 8 9 10 11 12 13 14 15 16)
+     :  (8 9 10 11 12 13 14 15 16 17) (9 10 11 12 13 14 15 16 17 18))
+
+     Also note how easy tracking the index of a list is since the
+     default for =for= variables is to start at zero:
+
+     #+begin_src lisp
+       (loop for i
+             from 0
+             for day
+             in '(monday tuesday wednesday thursday friday saturday sunday)
+             collect (cons i day))
+     #+end_src
+
+     #+RESULTS:
+     : ((0 . MONDAY) (1 . TUESDAY) (2 . WEDNESDAY) (3 . THURSDAY) (4 . FRIDAY)
+     :  (5 . SATURDAY) (6 . SUNDAY))
+
+*** Everything You've Ever Wanted to Know About =loop=
+**** Periodic Table of the Loop Macro
+     I am not going to type all of these out right now, but there are
+     a total of *48* examples given in this image. Something I'll come
+     back to do at the end, maybe.
+*** Using =loop= to Evolve!
+    We're going to create another game, making full use of =loop=.
+**** Overview
+    /Evolution/ will be more like Conway's /Game of Life/ in that it
+    will be more of a game You watch than a game You play.
+**** Game World
+     There will be a rectangular plane that wraps around its sides
+     (toroid) where our creatures live. Most of the plane is covered
+     in /steppes/, which have little vegetation. The center will have
+     a /jungle/, with many more plants that grow faster. Our creatures
+     will be herbavores, so they will be looking for plants to eat.
+
+     We'll store the game world in a few global variables, as
+     before. =*width*= and =*height*= will store the plane's
+     measurements, =jungle= will be the coordinates of a rectangle
+     that will be the jungle, and =*plant-energy*= is the amount (in
+     days/cycles) of energy a creature gets for finding a plant.
+
+     #+begin_src lisp :tangle evolution.lisp
+       (defparameter *width* 100)
+       (defparameter *height* 30)
+       (defparameter *jungle* '(45 10 10 10))
+       (defparameter *plant-energy* 80)
+     #+end_src
+
+     #+RESULTS:
+     : *PLANT-ENERGY*
+
+**** Growing Plants in Our World
+     We're going to store our plants in a hash-table, indexed by x/y
+     coordinates.
+
+     By default, hash-tables use =eq=. However, we need to use =equal=
+     instead since we'll be comparing cons cells.
+
+     #+begin_src lisp :tangle evolution.lisp
+       (defparameter *plants* (make-hash-table :test #'equal))
+     #+end_src
+
+     #+RESULTS:
+     : *PLANTS*
+
+     Plants will grow randomly across the world, in higher numbers in
+     the jungle and lower numbers in the steppes.
+
+     The =random-plant= function will make a plant grow (really just
+     updating the coordinates key in the hash-table) somewhere
+     randomly within a rectangle whose coordinates are passed in.
+
+     The =add-plants= function will apply the =random-plant= function
+     twice: Once for the jungle area, and once for the entire map.
+
+     #+begin_src lisp :tangle evolution.lisp
+       (defun random-plant (left top width height)
+         (let ((pos (cons (+ left (random width)) (+ top (random height)))))
+           (setf (gethash pos *plants*) t)))
+       (defun add-plants ()
+         (apply #'random-plant *jungle*)
+         (random-plant 0 0 *width* *height*))
+     #+end_src
+
+     #+RESULTS:
+     : ADD-PLANTS
+
+     It's interesting to note what we are doing here: A hash-table
+     where the /keys/ are important, and the /values/ are all just
+     =t=. Since =nil= is returned when nothing is found, it allows us
+     to fake having a set operator if we simply store the present
+     values in the hash-table with =t= as the value.
+
+     Other Lisp Dialects (more recent ones, like Clojure) have a built
+     in set structure, making this unnecessary. That said, it would
+     still work.
+**** Creating Animals
+     Animals are going to be complicated enough we'll need a structure
+     to support them. The structure will have the following slots:
+
+     - *x* and *y*: The coordinates of the animal. Where it is in
+       physical space.
+     - *energy*: How much stored energy it has (from eating plants).
+     - *dir*: Its current heading. Can be Diagonal or Orthogonal, like
+       a num-pad.
+     - *genes*: This will be the animal's propensity for making
+       changes to its heading. It will be a plain list with 8 members,
+       each holding an integer (which will be the weight for the given
+       heading change).
+
+
+     #+begin_src lisp :tangle evolution.lisp
+       (defstruct animal x y energy dir genes)
+     #+end_src
+
+     #+RESULTS:
+     : ANIMAL
+
+     Now, we will store our population of animals in the global
+     variable =*animals*=, and create our first creature. We can use a
+     list for this instead of a hash-table because we will only very
+     rarely need to search through =*animals*=—most of the time, we
+     will update all of our animals at once!
+
+     #+begin_src lisp :tangle evolution.lisp
+       (defparameter *animals*
+         (list (make-animal :x (ash *width* -1)
+                            :y (ash *height* -1)
+                            :energy 1000
+                            :dir 0
+                            :genes (loop repeat 8
+                                         collecting (1+ (random 10))))))
+     #+end_src
+
+     #+RESULTS:
+     : *ANIMALS*
+**** Handling Animal Motion
+     We are going to move our animals using the function =move=, which
+     takes an animal and updates its position (=x= and =y= slots).
+
+     The reason this isn't just a simple increment/decrement is the
+     /wrapping/ of the edges of the map: Since we want that, we need
+     to update the position if it goes over the width or height of our
+     plane, back to 0 (so we take the modulus of the resulting number
+     and the appropriate bound each time, and set the value to that
+     instead).
+
+     #+begin_src lisp :tangle evolution.lisp
+       (defun move (animal)
+         (let ((dir (animal-dir animal))
+               (x (animal-x animal))
+               (y (animal-y animal)))
+           (setf (animal-x animal) (mod (+ x
+                                           (cond ((and (>= dir 2) (< dir 5)) 1)
+                                                 ((or (= dir 1) (= dir 5)) 0)
+                                                 (t -1))
+                                           ,*width*)
+                                        ,*width*))
+           (setf (animal-y animal) (mod (+ y
+                                           (cond ((and (>= dir 0) (< dir 3)) -1)
+                                                 ((and (>= dir 4) (< dir 7)) 1)
+                                                 (t 0))
+                                           ,*height*)
+                                        ,*height*))
+           (decf (animal-energy animal))))
+
+     #+end_src
+
+     #+RESULTS:
+     : MOVE
+**** Handling Animal Turning
+     This function will use the genes in each creature to decide if it
+     turns or not.
+
+     It's worth noting here that we are using =labels= to make and use
+     the local recursive function =angle=, which will subtract the
+     gene-values, in order, from a random number between 0 and the
+     total sum of all of the gene values (exclusive). Once it equals
+     zero, it returns the count of how many times it recursed, which
+     is the index for the appropriate gene. This is added to the
+     current direction the animal is facing, and then modulused with
+     the number of directions (8) to ensure it is a valid heading.
+
+     #+begin_src lisp :tangle evolution.lisp
+       (defun turn (animal)
+         (let ((x (random (apply #'+ (animal-genes animal)))))
+           (labels ((angle (genes x)
+                      (let ((xnu (- x (car genes))))
+                        (if (< xnu 0)
+                            0
+                            (1+ (angle (cdr genes) xnu))))))
+             (setf (animal-dir animal)
+                   (mod (+ (animal-dir animal) (angle (animal-genes animal) x))
+                        8)))))
+     #+end_src
+
+     #+RESULTS:
+     : TURN
+**** Handling Animal Eating
+     We are just going to check if there is an intersection between an
+     animal's current location and the location of a plant. If so,
+     we'll consume the plant and give the appropriate energy to the
+     animal.
+
+     #+begin_src lisp :tangle evolution.lisp
+       (defun eat (animal)
+         (let ((pos (cons (animal-x animal) (animal-y animal))))
+           (when (gethash pos *plants*)
+             (incf (animal-energy animal) *plant-energy*)
+             (remhash pos *plants*))))
+     #+end_src
+
+     #+RESULTS:
+     : EAT
+**** Handling Animal Reproduction
+     This is the most interesting part, apparently. We are going to
+     copy things imperfectly, simulating (genetic) mutation.
+
+     #+begin_src lisp :tangle evolution.lisp
+       (defparameter *reproduction-energy* 200)
+       (defun reproduce (animal)
+         (let ((e (animal-energy animal)))
+           (when (>= e *reproduction-energy*)
+             (setf (animal-energy animal) (ash e -1))
+             (let ((animal-nu (copy-structure animal))
+                   (genes (copy-list (animal-genes animal)))
+                   (mutation (random 8)))
+               (setf (nth mutation genes) (max 1 (+ (nth mutation genes) (random 3) -1)))
+               (setf (animal-genes animal-nu) genes)
+               (push animal-nu *animals*)))))
+     #+end_src
+
+     #+RESULTS:
+     : REPRODUCE
+**** Simulating a Day in Our World
+**** Drawing Our World
+**** Creating a User Interface
+**** Ready for Play
