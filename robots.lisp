@@ -17,7 +17,7 @@
                                         ; with assoc.
                       (cond (d (+ pos (cdr d)))
                             ((eq 't c) (random 1024))
-                            ((eq 'l c) (return-from-main 'bye)); Player
+                            ((eq 'l c) (return-from main 'bye)); Player
                                         ; wants to leave.
                             (t pos))))
         for monsters = (loop repeat 10
@@ -61,4 +61,4 @@
                                               ((> (count p monsters) 1) #\#)
                                               (t #\A)))
                                         ((= p pos) #\@)
-                                        (t #\ ))))))))
+                                        (t #\ ))))))
