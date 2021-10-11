@@ -4425,6 +4425,7 @@ with all of the code I copied during that work.
 
      #+RESULTS:
      : *ANIMALS*
+
 **** Handling Animal Motion
      We are going to move our animals using the function =move=, which
      takes an animal and updates its position (=x= and =y= slots).
@@ -4459,6 +4460,7 @@ with all of the code I copied during that work.
 
      #+RESULTS:
      : MOVE
+
 **** Handling Animal Turning
      This function will use the genes in each creature to decide if it
      turns or not.
@@ -4487,6 +4489,7 @@ with all of the code I copied during that work.
 
      #+RESULTS:
      : TURN
+
 **** Handling Animal Eating
      We are just going to check if there is an intersection between an
      animal's current location and the location of a plant. If so,
@@ -4503,6 +4506,7 @@ with all of the code I copied during that work.
 
      #+RESULTS:
      : EAT
+
 **** Handling Animal Reproduction
      This is the most interesting part, apparently. We are going to
      copy things imperfectly, simulating (genetic) mutation.
@@ -4523,7 +4527,734 @@ with all of the code I copied during that work.
 
      #+RESULTS:
      : REPRODUCE
+
 **** Simulating a Day in Our World
+     To simulate our world, we're going to define an update function
+     named =update-world=. It will first check to see if any animals
+     have run out of energy, and if so, remove them. Then it will have
+     each remaining animal turn, move, eat, and reproduce according to
+     the functions above. Then, we will grow new plants.
+
+     We are using all of these functions for their side effects, so we
+     don't care much about their results. Therefore, we can use =mapc=
+     to make things more efficient.
+
+     #+begin_src lisp :tangle evolution.lisp
+       (defun update-world ()
+         (setf *animals* (remove-if (lambda (animal)
+                                      (<= (animal-energy animal) 0))
+                                    ,*animals*))
+         (mapc (lambda (animal)
+                 (turn animal)
+                 (move animal)
+                 (eat animal)
+                 (reproduce animal))
+               ,*animals*)
+         (add-plants))
+     #+end_src
+
+     #+RESULTS:
+     : UPDATE-WORLD
+
 **** Drawing Our World
+     We need to show the user the current state of the world. We'll
+     make a draw function for that called =draw-world=. It will loop
+     on the y axis first, drawing borders before the first x cell and
+     after the last x cell with =|=. Then it will loop through the x
+     cells of each row. If there are any animals in a cell (using
+     =some= because we care if the x/y coordinates match on /any/
+     animal), then we will draw an =M= there. Otherwise, we will see
+     if there are any plants there, and if so, draw a =*=. If not,
+     we'll just draw a space.
+
+     We don't care too much about the efficiency of this function
+     because we are not merely updating the screen after each call to
+     =update-world=.
+
+     #+begin_src lisp
+       (defun draw-world ()
+         (loop for y
+               below *height*
+               do (progn (fresh-line)
+                         (princ "|")
+                         (loop for x
+                               below *width*
+                               do (princ (cond ((some (lambda (animal)
+                                                        (and (= (animal-x animal) x)
+                                                             (= (animal-y animal) y)))
+                                                      ,*animals*)
+                                                #\M)
+                                               ((gethash (cons x y) *plants*) #\*)
+                                               (t #\space))))
+                  (princ "|"))))
+
+     #+end_src
+
+     #+RESULTS:
+     : DRAW-WORLD
+
 **** Creating a User Interface
+     Our final function is the UI for our game. We'll let the user see
+     the world at the start. Then we'll get some input from the
+     user. If the user types "quit", we will end the simulation. If
+     not, we'll see if they entered an integer. If so, we will run the
+     world for that many days/steps, drawing a =.= to the screen for
+     each 1000 years that passes. If not, we will simply update
+     once. Either way, we will show the world to the user, and
+     recurse.
+
+     #+begin_src lisp :tangle evolution.lisp
+       (defun evolution ()
+         (draw-world)
+         (fresh-line)
+         (let ((str (read-line)))
+           (cond ((equal str "quit") ())
+                 (t (let ((x (parse-integer str :junk-allowed t)))
+                      (if x
+                          (loop for i
+                                below x
+                                do (update-world)
+                                if (zerop (mod i 1000))
+                                  do (princ #\.))
+                          (update-world))
+                      (evolution))))))
+     #+end_src
+
+     #+RESULTS:
+     : EVOLUTION
+
 **** Ready for Play
+     It works!
+
+     As an exercise, the book says, we can use different letters to
+     represent different genes. I like this idea, so I am going to try
+     it.
+
+     I am going to use a [[https://en.wikipedia.org/wiki/Schwartzian_transform][Schwartzian Transform]] to make a list of the
+     largest to smallest genes, as per [[https://stackoverflow.com/a/38450427][this answer]] on Stack Overflow.
+
+     #+begin_src lisp :tangle evolution.lisp
+       (defun rank-genes (genes)
+         (mapcar #'second
+                 (stable-sort
+                  (loop for index from 0
+                        for element in genes
+                        collect (list index element))
+                  #'>
+                  :key #'first)))
+       (defun draw-animal (animal)
+         (let* ((genes (animal-genes animal))
+                (gene-index (rank-genes genes)))
+           (case (car gene-index)
+             (0 #\A)
+             (1 #\B)
+             (2 #\C)
+             (3 #\D)
+             (4 #\E)
+             (5 #\F)
+             (6 #\G)
+             (7 #\H)
+             (t #\I))))
+     #+end_src
+
+     #+RESULTS:
+     : DRAW-ANIMAL
+
+     Then, we need to rewrite our =draw-world= function to use this
+     new =draw-animal= function instead.
+
+     #+begin_src lisp :tangle evolution.lisp
+       (defun find-animal (animals x y)
+         (loop for animal in animals
+               when (and (= (animal-x animal) x)
+                         (= (animal-y animal) y))
+                 return animal))
+       (defun draw-world ()
+         (loop for y
+               below *height*
+               do (progn (fresh-line)
+                         (princ "|")
+                         (loop for x
+                               below *width*
+                               do (princ (cond ((some (lambda (animal)
+                                                        (and (= (animal-x animal) x)
+                                                             (= (animal-y animal) y)))
+                                                      ,*animals*)
+                                                (draw-animal (find-animal *animals* x y)))
+                                               ((gethash (cons x y) *plants*) #\*)
+                                               (t #\space))))
+                  (princ "|"))))
+
+
+     #+end_src
+
+     #+RESULTS:
+     : DRAW-WORLD
+
+*** What You've Learned
+    I've learned a lot about the =loop= macro.
+
+    - The =loop= can do any kind of loop needed.
+    - You easily loop upwards from 0 using the =for= token.
+    - You can use =for= with =in= for iterating over a list.
+    - You can collect the result of an operation on each of the items
+      in a list using the =collect= token.
+    - I have homework for the future in the Periodic Table of the Loop Macro.
+** Chapter 11: Printing Text with the =format= function
+   Manipulating Text is one of my focii, so I am excited to learn
+   about =format=.
+*** Anatomy of the =format= function
+    Here is an example.
+
+    #+begin_src lisp :results output
+      (format t "Add onion rings for only ~$ dollars more!" 1.5)
+    #+end_src
+
+    #+RESULTS:
+    : Add onion rings for only 1.50 dollars more!
+**** The Destination Parameter
+     The first argument to =format= is the /destination/
+     parameter. Possible values:
+
+     - =nil=: Don't print anything, just return the string.
+     - =t=: Print the value to stdout, returning =nil=.
+     - =stream=: Write data to specific /Output Stream/, which is
+       something we'll learn about in Chapter 12.
+
+
+     In the example above, we have this set to =t= so it will spit the
+     formatted string back to us on the console.
+
+     In the following example, it is set to =nil= so we can manipulate
+     the string more before =princ= ing it.
+
+     #+begin_src lisp :results output
+       (princ
+        (reverse
+         (format nil "Add onion rings for only ~$ dollars more!" 1.5)))
+     #+end_src
+
+     #+RESULTS:
+     : !erom srallod 05.1 ylno rof sgnir noino ddA
+**** The Control String Parameter
+     The second argument to =format= is the /control string/
+     parameter. It is a string with some number of control sequences
+     embedded in it. Control Sequences all start with a =~=, and
+     format the data before printing it (a la =printf=).
+
+     The =~$= control sequence indicates a /monetary floating-point/
+     value.
+**** Value Parameters
+     The actual data we are printing in a formatted way.
+*** Control Sequences for Printing Lisp Values
+    Any Lisp value can be printed with the =print= or =prin1=
+    functions, and for humans with the =princ= command.
+
+    The =format= function has control sequences for these effects, as
+    well. =~s= causes the value to be printed as in =print=, with
+    appropriate delimiters. And =~a= causes the value to be printed as
+    appropriate for humans to read, like =princ=.
+
+    #+begin_src lisp :results output
+      (format t "I am printing ~s in the middle of this sentence." "foo")
+      (fresh-line)
+      (format t "I am printing ~a in the middle of this sentence." "foo")
+    #+end_src
+
+    #+RESULTS:
+    : I am printing "foo" in the middle of this sentence.
+    : I am printing foo in the middle of this sentence.
+
+    You can adjust control sequence behavior with parameters embedded
+    within the control sequence itself. For instance, adding a number
+    to =~a= we can pad the value, ensuring it is a specific width. To
+    add on the left instead of the right, add an =@= at the end of the
+    parameter list. And to specify how many spaces should be the
+    minimum group used for padding (if You want to pad with a multiple
+    of 3 spaces only, for instance), that is the job of the second
+    parameter of =~a=, and comes after a comma, but before the =@= if
+    using.
+
+    #+begin_src lisp :results output
+      (format t "I am printing ~10a within 10 spaces of room." "foo")
+      (fresh-line)
+      (format t "I am printing ~10@a within 10 spaces of room." "foo")
+      (fresh-line)
+      (format t "I am printing ~10,3@a within a multiple of 3 spaces of room." "foo")
+    #+end_src
+
+    #+RESULTS:
+    : I am printing foo        within 10 spaces of room.
+    : I am printing        foo within 10 spaces of room.
+    : I am printing          foo within a multiple of 3 spaces of room.
+
+    The third parameter specifies the amount of padding we want at the
+    end of the term, explicitly. And the fourth specifies the
+    character to use for padding.
+
+    #+begin_src lisp :results output
+      (format t "I am printing ~,,4a in the middle of this sentence." "foo")
+      (fresh-line)
+      (format t "The world ~,,4,'!a feels very important, too." "foo")
+    #+end_src
+
+    #+RESULTS:
+    : I am printing foo     in the middle of this sentence.
+    : The world foo!!!! feels very important, too.
+*** Control Sequences for Formatting Numbers
+**** Control Sequences for Formatting Integers
+     You can display numbers in hexidecimal =~x=, binary =~b=, and
+     decimal =~d=.
+
+     #+begin_src lisp :results output
+       (format t "The number ~d is ~x in hexadecimal and ~b in binary." 1464 1464 1464)
+     #+end_src
+
+     #+RESULTS:
+     : The number 1464 is 5B8 in hexadecimal and 10110111000 in binary
+
+     You can pad like with =~a=, though the /second/ parameter is the
+     padding character. And You can turn on commas for separation with
+     the finale character =:=.
+
+     #+begin_src lisp :results output
+       (format t "Numbers with commas in them are ~10,',:d times better." 10000)
+     #+end_src
+
+     #+RESULTS:
+     : Numbers with commas in them are ,,,,10,000 times better.
+**** Control Sequences for Formatting Floating-Point Numbers
+     All floating point numbers can be handled with =~f=. The first
+     parameter is the number of characters to display. The second is
+     the number /after the decimal/. The third multiplies the result
+     by powers of 10 (letting us use E notation easily). And as we saw
+     above, =~$= handles money-style numbers (with exactly two digits
+     after the decimal).
+
+     #+begin_src lisp :results output
+       (defparameter lightspeed 299792458)
+       (format t "PI Can be estimated as ~4f for speed and ~,4f for accuracy." pi pi)
+       (fresh-line)
+       (format t "The speed of light is ~,,-8f x 10^8 m/s in scientific notation, but ~,,-6f m/s in engineering notation." lightspeed lightspeed)
+     #+end_src
+
+     #+RESULTS:
+     : PI Can be estimated as 3.14 for speed and 3.1416 for accuracy.
+     : The speed of light is 2.9979245 x 10^8 m/s in scientific notation, but 299.79245 m/s in engineering notation.
+
+*** Printing Multiple Lines of Output
+    There are two functions for inserting newlines in stdout: =terpri=
+    and =fresh-line=.
+
+    The difference is that =terpri= will always insert a
+    newline. =fresh-line= will only do so if You aren't already at the
+    beginning of a line.
+
+    =format= has similar control sequences: =~%= is like =terpri=, and
+    =~&= is like =fresh-line=.
+
+    #+begin_src lisp :results output
+      (format t "This is on one line~%")
+      (format t "~%This is on another line, after two terpri.")
+      (fresh-line)
+      (format t "This is on one line~&")
+      (format t "~&This is on another line, after two fresh-line.")
+    #+end_src
+
+    #+RESULTS:
+    : This is on one line
+    : 
+    : This is on another line, after two terpri.
+    : This is on one line
+    : This is on another line, after two fresh-line.
+
+    There is only one parameter for these, and that is the number of
+    newlines that should be inserted. There is no difference in this
+    use-case.
+
+    #+begin_src lisp :results output
+      (format t "This will Print~5%On a Few~5&Lines I Think.")
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+    This will Print
+
+
+
+
+    On a Few
+
+
+
+
+    Lines I Think.
+    #+end_example
+
+*** Justifying Output
+    We're going to return some random text to illustrate the
+    justification rules.
+
+    #+begin_src lisp
+      (defun random-animal ()
+        (nth (random 5) '("dog" "tick" "tiger" "walrus" "kangaroo")))
+    #+end_src
+
+    #+RESULTS:
+    : RANDOM-ANIMAL
+
+    We can use the =~t= control sequence to display data in a uniform
+    table-line format. It takes a parameter that will specify which
+    character column the info should be placed in. The following
+    example works because our longest value, "kangaroo", is shorter
+    than the space between our columns (it is 8 characters, the space
+    is 10).
+
+    #+begin_src lisp :results output
+      (loop repeat 10
+            do (format t "~5t~a ~15t~a ~25t~a~%"
+                        (random-animal)
+                        (random-animal)
+                        (random-animal)))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+         tick      tick      tiger
+         walrus    kangaroo  tiger
+         walrus    tick      dog
+         walrus    tiger     tick
+         walrus    tiger     tiger
+         dog       walrus    tick
+         tick      tiger     dog
+         tick      tick      walrus
+         dog       tick      tick
+         tiger     tick      walrus
+    #+end_example
+
+    We can do this differently using the =~<= and =~>= control
+    sequences.
+
+    Deconstructing the full control string of =~30<~a~;~a~;~a~>~%=:
+
+    - =~30<=: Start Justifying =~<=. Parameter 30 means it should be
+      30 character wide in total.
+    - =~a=: Place a Value Here.
+    - =~;=: Start a New Item to Justify.
+    - =~>=: Stop Justifying.
+    - =~%=: =terpri=.
+
+    #+begin_src lisp :results output
+      (loop repeat 10
+            do (format t "~30<~a~;~a~;~a~>~%"
+                       (random-animal)
+                       (random-animal)
+                       (random-animal)))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+    tick         dog         tiger
+    walrus    kangaroo    kangaroo
+    kangaroo       dog        tick
+    walrus     kangaroo     walrus
+    dog         dog          tiger
+    tiger      tick       kangaroo
+    tiger        tick         tick
+    walrus    kangaroo    kangaroo
+    tick      kangaroo       tiger
+    tiger        tick         tick
+    #+end_example
+
+    We can center values by appending the finale character =:@= to the
+    original Justify control sequence.
+
+    #+begin_src lisp :results output
+      (loop repeat 10 do (format t "~30:@<~a~>~%" (random-animal)))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+                 tick             
+                tiger             
+                tiger             
+                 tick             
+                walrus            
+                 tick             
+                 dog              
+                walrus            
+                 dog              
+                 tick             
+    #+end_example
+
+    This also works for mutiple values in a line.
+
+    #+begin_src lisp :results output
+      (loop repeat 10
+            do (format t "~30:@<~a~;~a~;~a~>~%"
+                       (random-animal)
+                       (random-animal)
+                       (random-animal)))
+
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+       kangaroo   walrus   dog    
+       walrus   walrus   tiger    
+        dog    dog     walrus     
+       walrus   walrus   tiger    
+        walrus    dog     dog     
+      kangaroo  kangaroo  walrus  
+        tiger     dog     dog     
+       walrus    tick    tiger    
+        walrus    dog    tick     
+         tick     dog     dog     
+    #+end_example
+
+    To get nicely-centered columns, we need to justify the columns
+    separately. Dividing our original 30 character space into three
+    separate 10 character spaces should nicely do the trick.
+
+    #+begin_src lisp :results output
+      (loop repeat 10
+            do (format t "~10:@<~a~>~10:@<~a~>~10:@<~a~>~%"
+                       (random-animal)
+                       (random-animal)
+                       (random-animal)))
+
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+      walrus     dog       dog    
+       dog       dog     kangaroo 
+      walrus     tick     tiger   
+      walrus     dog       dog    
+     kangaroo  kangaroo   walrus  
+     kangaroo  kangaroo    dog    
+       dog      walrus   kangaroo 
+     kangaroo  kangaroo    dog    
+     kangaroo    tick     walrus  
+       dog      tiger      tick   
+    #+end_example
+
+    There we go.
+
+    Let's say we wanted the left column left justified, the right
+    right-justified, and the center centered? Well, =:= does things on
+    the right, and =@= on the left. Together, they center. Easy
+    enough.
+
+    #+begin_src lisp :results output
+      (loop repeat 10
+            do (format t "~10@<~a~>~10:@<~a~>~10:<~a~>~%"
+                       (random-animal)
+                       (random-animal)
+                       (random-animal)))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+    kangaroo   kangaroo     walrus
+    tick         tick         tick
+    kangaroo     tick         tick
+    kangaroo     tick         tick
+    kangaroo     tick          dog
+    dog          tick     kangaroo
+    kangaroo    walrus      walrus
+    walrus       tick          dog
+    kangaroo   kangaroo        dog
+    walrus      walrus       tiger
+    #+end_example
+
+*** Iterating Through Lists Using Control Sequences
+    The =format= function has so many features some people consider it
+    to be a DSL. We'll go over DSLs more in Chapter 17.
+
+    Like most programming languages, =format= can loop through
+    data. This is done with =~{= and =~}=.
+
+    #+begin_src lisp
+      (defparameter *zoo* (loop repeat 10 collect (random-animal)))
+    #+end_src
+
+    #+RESULTS:
+    : *ZOO*
+
+    To go to the =*zoo*=, we can loop over the =*zoo*= using our
+    control sequences.
+
+    #+begin_src lisp :results output
+      (format t "~{I see a ~a!~&~}" *zoo*)
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+    I see a kangaroo!
+    I see a tick!
+    I see a walrus!
+    I see a tick!
+    I see a kangaroo!
+    I see a dog!
+    I see a kangaroo!
+    I see a tick!
+    I see a tick!
+    I see a dog!
+    #+end_example
+
+    We can also do more than one item from the list per iteration.
+
+    #+begin_src lisp :results output
+      (format t "~{I see a ~a... or was it a ~a?~&~}" *zoo*)
+    #+end_src
+
+    #+RESULTS:
+    : I see a kangaroo... or was it a tick?
+    : I see a walrus... or was it a tick?
+    : I see a kangaroo... or was it a dog?
+    : I see a kangaroo... or was it a tick?
+    : I see a tick... or was it a dog?
+
+    However, there need to be enough items in the list to fully
+    satisfy all of the control structures in an iteration. So, the
+    above wouldn't work with an odd number in our =*zoo*=.
+
+*** A Crazy Formatting Sequence for Creating Pretty Tables of Data
+    As one last example, we're going to dissect a long control string
+    to show 100 numbers in a pretty-printed table.
+
+    Deconstructing the full control string of =|~{~<|~%|~,33:;~2d
+    ~>~}|=:
+
+    - =|=: We start by drawing our first pipe.
+    - =~{=: Begin loop.
+    - =~<=: Begin justification.
+    - =|~%|=: A piece of the control string to be applied after a
+      limit is reached.
+    - =~,33:;=: The limit is 33 characters.
+    - =~2d=: Display numbers, padding with space up to two digits.
+    - =~>=: End Justification.
+    - =~}=: End Loop.
+    - =|=: Final Pipe.
+
+
+    It's worth noting how this adapts to changes in the =~,33:;=
+    sequence: If You increase it, the table will be adjusted to
+    include more numbers in a row, but only every three times it's
+    increased. It really is behaving as a limit before which the
+    =|~%|= string is added.
+
+    #+begin_src lisp :results output
+      (format t "|~{~<|~%|~,33:;~2d ~>~}|" (loop for x below 100 collect x))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+    | 0  1  2  3  4  5  6  7  8  9 |
+    |10 11 12 13 14 15 16 17 18 19 |
+    |20 21 22 23 24 25 26 27 28 29 |
+    |30 31 32 33 34 35 36 37 38 39 |
+    |40 41 42 43 44 45 46 47 48 49 |
+    |50 51 52 53 54 55 56 57 58 59 |
+    |60 61 62 63 64 65 66 67 68 69 |
+    |70 71 72 73 74 75 76 77 78 79 |
+    |80 81 82 83 84 85 86 87 88 89 |
+    |90 91 92 93 94 95 96 97 98 99 |
+    #+end_example
+
+*** Attack of the Robots!
+    This is the game for this chapter. And interestingly, it is the
+    first game that is not built using prose. I'm expected to read the
+    code and type it in, like in the old days.
+
+    This time we are building that PC Console Classic, =robots=.
+
+    My biggest complaint is the size of the text in the image. It is
+    teeny tiny.
+
+    Interestingly, this looks like a single function? Odd.
+
+    #+begin_src lisp :tangle robots.lisp
+      (defun robots ()
+        (loop named main ; By naming our loop "main", we can use "return
+                                              ; from" to exit the loop early.
+              with directions = '((q . -65) (w . -64) (e . -63)
+                                  (a . -1)            (d . 1)
+                                  (z . 63)  (x . 64)  (e . 65)) ; These are
+                                              ; apparently the offsets for a
+                                              ; 64-wide board; I've arranged
+                                              ; them according to the keys
+                                              ; they are assigned to.
+              for pos = 544
+              then (progn (format t "~%(qwe/asd/zxc) to move, (t)eleport, (l)eave:")
+                          (force-output)
+                          (let* ((c (read))
+                                 (d (assoc c directions))); Perform a lookup
+                                              ; of the input
+                                              ; with assoc.
+                            (cond (d (+ pos (cdr d)))
+                                  ((eq 't c) (random 1024))
+                                  ((eq 'l c) (return-from-main 'bye)); Player
+                                              ; wants to leave.
+                                  (t pos))))
+              for monsters = (loop repeat 10
+                                   collect (random 1024)) ;; 10 robots,
+              ;; random places.
+              then (loop for mpos in monsters
+                         collect (if (> (count mpos monsters) 1)
+                                     mpos
+                                     (cdar (sort (loop for (k . d) in directions
+                                                       for new-mpos = (+ mpos d)
+                                                       ; This is to
+                                                       ; calculate something
+                                                       ; called the
+                                                       ; "Manhattan
+                                                       ; Distance" to the
+                                                       ; player. I will need
+                                                       ; to look this up for
+                                                       ; future reference.
+                                                       collect (cons (+ (abs (- (mod new-mpos 64)
+                                                                                (mod pos 64)))
+                                                                        (abs (- (ash new-mpos -6)
+                                                                                (ash pos -6))))
+                                                                     new-mpos))
+                                                 '<
+                                                 :key #'car))))
+              when (loop for mpos in monsters
+                         always (> (count mpos monsters) 1))
+              return 'player-wins
+              do (format t
+                         "~%|~{~<|~%|~,65:;~A~>~}|"; Was told not to worry
+                                              ; about this yet; it looks
+                                              ; very similar to the table
+                                              ; formula above, will probably
+                                              ; dissect when done typing
+                                              ; this in.
+
+                         (loop for p
+                               below 1024 ; Loop through board positions.
+                               collect (cond ((member p monsters)
+                                              (cond ((= p pos) (return-from main 'player-loses))
+                                                    ((> (count p monsters) 1) #\#)
+                                                    (t #\A)))
+                                              ((= p pos) #\@)
+                                              (t #\ ))))))))
+    #+end_src
+
+    #+RESULTS:
+    : ROBOTS
+
+*** What You've Learned
+    This was a short-ish chapter! Even the game was only one big
+    function.
+
+    - Function =format= has 3 main paramters, in order: output,
+      control string, value(s).
+    - To embed lisp values in =format= strings, use =~s= or =~a=.
+    - There are a lot of other control sequences, including loops and
+      justifications.
+
+** Chapter 12: Working with Streams
+   
+
