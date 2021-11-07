@@ -5256,4 +5256,622 @@ with all of the code I copied during that work.
       justifications.
 
 ** Chapter 12: Working with Streams
+   Interacting with the outside world is a main function of most
+   programs. In Common Lisp, most of this kind of interaction happens
+   through /streams/.
+
+   /Streams/ are data types in Common Lisp that allow You to take an
+   external resource and treat it like a normal piece of data.
+
+*** Types of Streams
+    Different types of streams are available for different types of
+    resources, and for different directions of interaction.
+
+    *NOTE:* In this chapter, we'll only discuss streams based on text
+     characters. Other types of streams exist, such as a binary stream
+     (for sending and reading raw bytes of binary data). But this
+     book, and my focus, is on manipulating textual data.
+
+**** Streams by Type of Resource
+     The following are the most commonly used stream types:
+
+     - Console Streams
+
+       What we've been using so far; REPL interaction/stdout/etc.
+     - File Streams
+       
+       Read and write to files on storage.
+     - Socket Streams
+
+       Other Computers over the Network.
+     - String Streams
+
+       Send and Receive Text from a Lisp String.
+
+**** Streams by Direction
+     When You want to write data to a resource, You use /output
+     streams/. When You want to read data from a resource, You use
+     /input streams/.
+
+***** Output Streams
+      Output streams are used for writing to the REPL, Writing to
+      Disk, and Sending Information. You can basically do two things
+      with an output stream:
+
+      1. Check whether the stream is valid.
+      2. Push a new item onto the stream.
+
+
+      A stream is, by design, more restrictive than a true data
+      structure in Lisp.
+
+      You can use the =output-stream-p= predicate to test if a stream
+      is valid:
+
+      #+begin_src lisp
+        (output-stream-p *standard-output*)
+      #+end_src
+
+      #+RESULTS:
+      : T
+
+      And You can specify the output stream in commands like
+      =write-char=:
+
+      #+begin_src lisp :results output
+      (write-char #\x *standard-output*)
+      #+end_src
+
+      #+RESULTS:
+      : x
+
+***** Input Streams
+
+*** Working with Files
+    This is the most common use for explicitly using streams (that is,
+    streams that are not *standard-output* and *standard-input*).
+
+    It's also one of the ones I am most excited to learn.
+
+    There are many ways to create a file stream in Common Lisp. The
+    most common way is =with-open-file=, which has a bunch of
+    protection built into it.
+
+    #+begin_src lisp
+      (with-open-file (my-stream "data.txt" :direction :output)
+        (print "My data." my-stream))
+    #+end_src
+
+    #+RESULTS:
+    : My data.
+
+    We can then read the file into the program using the =:input=
+    direction, instead.
+
+    #+begin_src lisp
+      (with-open-file (my-stream "data.txt" :direction :input)
+        (read my-stream))
+    #+end_src
+
+    #+RESULTS:
+    : My data.
+
+    Since =print= and =read= not only work with every stream type, but
+    also all of the basic Common Lisp data types, we can easily use
+    the same concept to write more complicated data structures to
+    disk.
+
+    #+begin_src lisp
+      (let ((animal-noises '((dog . woof)
+                             (cat . meow))))
+        (with-open-file (my-stream "animal-noises.txt" :direction :output)
+          (print animal-noises my-stream)))
+    #+end_src
+
+    #+RESULTS:
+    : ((DOG . WOOF) (CAT . MEOW))
+
+    And then, to read it, it is the exact same command syntax as
+    above.
+
+    #+begin_src lisp
+      (with-open-file (my-stream "animal-noises.txt" :direction :input)
+        (read my-stream))
+    #+end_src
+
+    #+RESULTS:
+    : ((DOG . WOOF) (CAT . MEOW))
+
+    This is really cool, for two reasons:
+
+    1. If I'm using state in my program, it will be trivial to dump
+       that state into a file.
+    2. If I'm not, it will be even easier to store/append the result
+       to a file.
+
+
+    We can modify the behavior of =with-open-file= using keyword
+    parameters. This should error, because of the file created above:
+
+    #+begin_src lisp :eval never
+      (with-open-file (my-stream "data.txt" 
+                                 :direction :output
+                                 :if-exists :error)
+        (print "my data" my-stream))
+
+    #+end_src
+
+    However, since I'm using =sbcl= with =slime=, the error gives me
+    new info: Other keywords that are usable with =:if-exists= include
+    =:supercede=, =:overwrite=, =:rename=, and =:append=.
+
+    Two notes to end this short section:
+
+    1. There /are/ lower-level commands for opening and closing file
+       streams. However, using them should only be needed if for some
+       reason =with-open-file= will not work for You.
+    2. There are a bunch of other =with-= commands to allocate various
+       resources in the core Lisp libraries. There are all examples of
+       /Macros/, which we'll learn more about (and creating our own
+       =with-= commands using!) in Chapter 16.
+
+*** Working with Sockets
+    We can also use streams to communicate with another computer,
+    through the use of /sockets/, which are mechanisms for routing
+    data over a computer network between programs running on different
+    computers on that network.
+
+    Unfortunately, sockets did not make it into the ANSI Standard, and
+    that means that there is no standard across implementations. As I
+    am using =sbcl= and not =clisp=, I will likely have to convert
+    every example in this section to the way =sbcl= does things. Other
+    avenues I could pursue include =cl-sockets= and =usocket=, two
+    different libraries striving to bring sockets to Common Lisp.
+
+**** Inet Sockets
+     These are the bread and butter here, supposedly. We'll focus on
+     IPv4, since I am more familiar, though my work should largely be
+     in IPv6 for futureproofing.
+
+     #+begin_src lisp
+       (defparameter my-socket
+         (make-instance 'sb-bsd-sockets:inet-socket
+                        :type :stream :protocol :tcp))
+     #+end_src
+
+     #+RESULTS:
+     : MY-SOCKET
+
+     To bind our new socket to the port specified in the example
+     (Port 4321) on our machine, we need to call
+     =sb-bsd-sockets:socket-bind=.
+
+     #+begin_src lisp
+       (sb-bsd-sockets:socket-bind my-socket #(127 0 0 1) 3210)
+     #+end_src
+
+     #+RESULTS:
+     : NIL
+
+     And then, to start listening for signals on that socket, we need
+     to call =sb-bsd-sockets:socket-listen=.
+
+     #+begin_src lisp
+       (sb-bsd-sockets:socket-listen my-socket 2)
+     #+end_src
+
+     #+RESULTS:
+     : NIL
+
+     The way that worked best for me was suggested on a [[https://www.reddit.com/r/lisp/comments/hw8fdi/comment/fyyosl2/?utm_source=share&utm_medium=web2x&context=3][Reddit Thread]];
+     Because of the way the underlying C code works, we need to pass a
+     /new/ socket to the stream when we make it. The socket we just
+     made is the outwardly facing one.
+
+     On the server side, I needed to run the following:
+
+     #+begin_src lisp
+       (defparameter my-socket-stream 
+         (sb-bsd-sockets:socket-make-stream 
+          (sb-bsd-sockets:socket-accept my-socket)
+          :input t
+          :output t))
+     #+end_src
+
+     #+RESULTS:
+     : MY-SOCKET-STREAM
+
+     This will wait until the client connects, and return a usable
+     stream. If You are running this in Org Babel, have a terminal
+     with a REPL handy, and possibly set up with the next part.
+
+     On the Client Side, You need to do very similar things, at least
+     until the end:
+
+     #+begin_src lisp
+       (defparameter client-socket 
+         (make-instance 'sb-bsd-sockets:inet-socket 
+                        :type :stream 
+                        :protocol :tcp))
+       (defparameter client-socket-stream
+         (sb-bsd-sockets:socket-make-stream
+          client-socket :input t :output t))
+       (sb-bsd-sockets:socket-connect client-socket #(127 0 0 1) 3210)
+     #+end_src
+
+     And then, to send something, You can use =print= as normal—but
+     You need to tell the socket to send it with =finish-output=
+     before anything is actually sent!
+
+     #+begin_src lisp
+       (print "Hello World!" my-socket-stream)
+       (finish-output my-socket-stream)
+     #+end_src
+
+     #+RESULTS:
+     : NIL
+
+     Upon running the above code, the string "Hello World!" should
+     appear in Your Client REPL.
+
+     All that remains then is to clean up. On the Client, run the
+     following:
+
+     #+begin_src lisp
+       (sb-posix:close client-socket-stream)
+       (sb-bsd-sockets:socket-close client-socket)
+     #+end_src
+
+     And on the server (in Org Babel) You can run this to clean up:
+
+     #+begin_src lisp
+       (sb-posix:close my-socket-stream)
+       (sb-bsd-sockets:socket-close my-socket)
+     #+end_src
+
+     #+RESULTS:
+     : T
+
+     So, that was fun. Let's actually read the book, now.
+
+     They Basically did the same thing, but bidirectionally. Which, to
+     be fair, You could do with the above (as we opened both streams
+     as input and output).
+
+     Fun, but moving on.
+*** String Streams: The Oddball Type
+    Though streams are usually used exclusively for interfacing with
+    the outside world from within Lisp, there is one great exception:
+    The String Stream, which takes a string and treats it as a stream.
+
+    You create string streams using =make-string-output-stream= and
+    =make-string-input-stream=.
+
+    #+begin_src lisp
+      (defparameter foo (make-string-output-stream))
+      (princ "This will go into foo. " foo)
+      (princ "This will also go into foo." foo)
+      (get-output-stream-string foo)
+    #+end_src
+
+    #+RESULTS:
+    : This will go into foo. This will also go into foo.
+
+    There are a few reasons why this can be useful:
+
+    1. Sending Streams to Functions
+
+       If we design our functions to accept streams instead of just
+       strings, they may be more versatile and generic. Also, if we
+       have a function that expects file or socket streams, we can use
+       string streams to test.
+
+       The example given is a logging function, where we check to
+       ensure the log is valid (using a string stream) before writing
+       it to disk (using a file stream).
+
+    2. Working with Long Strings
+
+       String Streams can lead to better performance if Your code
+       deals with very long strings. Here, string streams take the
+       place of string builders in other languages, allowing us to
+       build complex, large strings without needing so much memory
+       devoted to it.
+
+    3. Reading and Debugging
+
+       String Streams can make Your code easier to read and debug,
+       espcially if used in tandem with the =with-output-to-string=
+       macro.
+
+
+
+    Here's an example of that last one:
+
+    #+begin_src lisp
+      (with-output-to-string (*standard-output*)
+        (princ "the sum of ")
+        (princ 5)
+        (princ " and ")
+        (princ 2)
+        (princ " is ")
+        (princ (+ 2 5)))
+    #+end_src
+
+    #+RESULTS:
+    : the sum of 5 and 2 is 7
+
+    You can use this macro both to diagnose difficult issues in code
+    as well as to build strings in a more elegant way (as if printing
+    information to console) than using something like
+    =concatenate=. However, this is anathema to the functional
+    mindset, as it relies on mutating state. There are two sides to
+    the coin, here.
+*** What You've Learned
+    Streams Streams Streams!
+
+    - Different streams interact with different resources in different
+      directions.
+    - Socket streams are not in the ANSI standard, but each
+      implementation has their own answer for them (and there are two
+      major libraries in =cl-sockets= and =usocket=.
+    - String Streams allow us to use stream functions without an
+      outside resource, and to mutate data in an elegant way.
+** Chapter 13: Let's Create a Web Server!
+   In today's world, the most common way to interact with a user is
+   through the Web.
+
+   So naturally, we are going to learn to do this from scratch, by
+   building a web server.
+*** Error Handling in Common Lisp
+    *Any time You're interacting with the outside world, unexpected
+     things can happen.*
+
+     Common Lisp has a very extensive set of features to handle
+     exceptions.
+**** Signaling a condition
+     If something goes wrong in Your code, a Lisp function can notify
+     the environment of a possible problem by signaling a condition.
+
+     If You want to signal a condition directly, You can do so with
+     the =error= command. Using =error= will interrupt Your program
+     unless You intercept (catch) the error elsewhere. This will error
+     with the condition "foo".
+
+     #+begin_src lisp
+       (error "foo")
+     #+end_src
+
+     Most of the time, signals will be triggered due to bugs, not
+     because You put them there.
+**** Creating Custom Conditions
+     In the above example, "foo" describes the error that was
+     encountered, but not as well as it could. Common Lisp supports
+     different signal conditions (error types) that will help to make
+     the error encountered more understandable. Making these is done
+     with =define-condition=.
+
+     #+begin_src lisp
+       (define-condition foo () ()
+         (:report (lambda (condition stream)
+                    (princ "Stop FOOing around, numbskull!" stream))))
+     #+end_src
+
+     #+RESULTS:
+     : FOO
+
+     Triggering this new condition should lead to a different error
+     screen than last time:
+
+     #+begin_src lisp
+       (error 'foo)
+     #+end_src
+**** Intercepting Conditions
+     When we create a condition, it's given a name. This name can be
+     used by the =handler-case= function to handle the error instead
+     of showing the error screen.
+
+     #+begin_src lisp
+       (defun bad-function ()
+         (error 'foo))
+     #+end_src
+
+     #+RESULTS:
+     : BAD-FUNCTION
+
+     The above function will always throw the *foo* condition. We're
+     not going to let the error screen pop up, though.
+
+     #+begin_src lisp
+       (handler-case (bad-function)
+         (foo () "Somebody Signalled Foo!")
+         (bar () "Somebody Signalled Bar!"))
+     #+end_src
+
+     #+RESULTS:
+     : Somebody Signalled Foo!
+
+     In this way, You can handle errors that Your program may be prone
+     to (from user input, or network connections, etc etc) without
+     needing to fully interrupt Your program. The downside is that it
+     makes Your code slightly harder to read, but You could make a
+     wrapper function to mitigate that.
+**** Protecting Resources Against Unexpected Conditions
+     When an unexpected exception occurs, there is always the
+     possibility that Your program may be brought down—possibly even
+     with damage to resources outside Your program.
+
+     If these exceptions are not handled properly, resources may be
+     lost or locked indefinitely (until reboot).
+
+     In Common Lisp, the protection against this comes from the
+     command =unwind-protect=. It tells Lisp that the specified code
+     must be executed no matter what happens.
+
+     #+begin_src lisp
+       (unwind-protect (/ 1 0)
+         (princ "I need to say 'flubyduby' no matter what!"))
+     #+end_src
+
+     While this output is not captured by Org Babel, I'm confident the
+     operation happened as expected. Running this in a REPL works as
+     intended.
+
+     Many of the aforementioned =with-= macros call =unwind-protect=
+     under the hood, and I have seen it in the wild as recently as
+     today.
+
+     Note: Restarts are only briefly touched on in this book, in the
+     comic. Will need to research them afterwards.
+*** Writing a Web Server from Scratch
+**** How a Web Server Works
+     HTTP is the protocol we'll be using for the web
+     server. Apparently, this web server is adapted from =http.lisp=,
+     which was created by Ron Garret.
+
+     That said, since I will likely need to rewrite most of the code
+     here, I will come back to this.
+* Part IV - Lisp is Science
+** Chapter 14 - Ramping Lisp Up a Notch with Functional Programming
+*** What is Functional Programming
+    At this point, I think I am pretty familiar with this. I'll only
+    note the things that stood out to me.
+
+    The book goes a bit further into the math terminology: The set of
+    inputs to a function are the "Domain" of the function, and the set
+    of results is the "Range" of the function. Thus it can be said
+    that for each member of the Domain of the function, it will return
+    the same member of the Range.
+
+    It also draws a difference in terminology between a function
+    "returning a value" in imperative programming, and "evaluating to
+    a result" in functional programming. This is because of the
+    difference between turing machines and lambda calculus; a function
+    never "returns" anything in lambda calculus, it is evaluated using
+    substitution to a result.
+
+    It also lists the following tenets of functional programming:
+
+    - Referential Transparency.
+    - No outside references.
+    - No mutating variables.
+    - No side effects, just the result.
+    - No sending information to the outside world.
+    - No receiving information from the outside world.
+
+
+    These last two points are the sticking point, and the reason a
+    program cannot be 100% functional: If it doesn't communicate with
+    the outside world at all, it is not useful.
+
+    We're given the example of the =sin= function, which returns the
+    sine of a given number.
+
+    #+begin_src lisp
+      (sin 0.5)
+    #+end_src
+
+    #+RESULTS:
+    : 0.47942555
+
+    It then goes on to draw a bold line between /Functional/ code and
+    /Imperative/ code, stating that all functional code should be
+    isolated from all imperative code, and that most of Your code
+    should be in the former group, not the latter.
+*** Anatomy of a Program in the Functional Style
+    We're going to use the example of a program that keeps track of
+    widgets to illustrate some concepts. Since this is such a short
+    example, the imperative part of the code is bigger than the
+    functional part. However, normally ~80% of the code should be
+    functional.
+
+    #+begin_src lisp
+      ; Functional
+      (defun add-widget (database widget)
+        (cons widget database))
+      ; Imperative
+      (defparameter *database* nil)
+      (defun main-loop ()
+        (loop (princ "Please enter the name of a new widget:")
+              (setf *database* (add-widget *database* (read)))
+              (format t "The database contains the following: ~a~%" *database*)))
+    #+end_src
+
+    #+RESULTS:
+    : MAIN-LOOP
+** Chapter 15 - Dice of Doom, a Game Written in the Functional Style
+*** Basic List of Rules
+    - Two Players (A and B) occupy spaces on a hexagonal grid. Each
+      hexagon in the grid will have some d6s on it, owned by the
+      occupant.
+    - During a turn, a player can perform any number of moves, but
+      must perform at least one. If a player cannot move, the game
+      ends.
+    - A move consists of attacking neighboring hexagons owned by the
+      opponent. The player must have more dice in their hexagon than
+      the one they are attacking in order to attack. For now, all
+      attacks lead to a win. In future variants, dice are rolled
+      during battle.
+    - After winning a battle, the losing player's dice are removed
+      from the board, and all but one of the winning player's dice are
+      moved onto the newly won hexagon.
+    - After a player is finished with their turn, reinforcements are
+      added to that player's dice armies. Reinforcing dies always
+      start at the upper-left corner, move across and down. The
+      maximum number of dice added as reinforcements is one less than
+      the number of enemy dice removed during their turn.
+    - When a player cannot take a turn, the game is ended. The player
+      with the most hexagons (ties possible) is the winner.
+*** Implementing Dice of Doom, Version 1
+    :PROPERTIES:
+    :header-args:lisp: :tangle dice-of-doom-v1.0.lisp
+    :END:
+**** Defining Some Global Variables
+     We're still using global variables. Interesting.
+
+     #+begin_src lisp
+       (defparameter *num-players* 2)
+       (defparameter *max-dice* 3)
+       (defparameter *board-size* 2)
+       (defparameter *board-hexnum* (* *board-size* *board-size*))
+     #+end_src
+
+     #+RESULTS:
+     : *BOARD-HEXNUM*
+**** Representing the Game Board
+     Though the game is played on hexes, there's no need at this scale
+     to model it that way. It will be functionally equivalent to a 2
+     by 2 square grid, for now.
+
+     We'll store the board state in two places: 1 list of tuples for
+     drawing the board, and 1 array for our eventual AI player (for
+     efficiency).
+
+     The following code is in the functional style.
+     #+begin_src lisp
+       (defun board-array (list)
+         (make-array *board-hexnum* :initial-contents list))
+     #+end_src
+
+     #+RESULTS:
+     : BOARD-ARRAY
+
+     To instantiate the board at the beginning of the game, we'll use
+     a function that references the global variables above.
+
+     The following code is in the imperative style.
+
+     #+begin_src lisp
+       (defun generate-board ()
+         (board-array (loop for n
+                            below *board-hexnum*
+                            collect (list (random *num-players*)
+                                          (1+ (random *max-dice*))))))
+     #+end_src
+
+     #+RESULTS:
+     : GENERATE-BOARD
+
+     
+
 
