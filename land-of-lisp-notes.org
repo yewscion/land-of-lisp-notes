@@ -5872,6 +5872,35 @@ with all of the code I copied during that work.
      #+RESULTS:
      : GENERATE-BOARD
 
+     Since we are going to start with two players, naming them by
+     letter (A and B) makes sense. Here is a function that turns an
+     ASCII digit into the corresponding capital letter.
+
+     #+begin_src lisp
+       (defun player-letter (n)
+         (code-char (+ 97 n)))
+     #+end_src
+
+     #+RESULTS:
+     : PLAYER-LETTER
+
+     And here is a primative drawing function, so our player isn't
+     looking at cons cells:
+
+     #+begin_src lisp
+       (defun draw-board (board)
+         (loop for y below *board-size*
+               do (progn
+                    (fresh-line)
+                    (loop repeat (- *board-size* y)
+                          do (princ "  "))
+                    (loop for x below *board-size*
+                          for hex = (aref board (+ x (* *board-size* y)))
+                          do (format t "~a-~a " (player-letter (first hex))
+                                     (second hex))))))
+     #+end_src
+
+     #+RESULTS:
+     : DRAW-BOARD
+**** Generating a Game Tree
      
-
-
